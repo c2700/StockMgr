@@ -1,4 +1,4 @@
-from tkinter.ttk import Notebook
+from tkinter.ttk import *
 import tksheet
 from baseclasses import *
 from tkinter import *
