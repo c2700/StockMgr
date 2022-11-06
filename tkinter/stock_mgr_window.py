@@ -11,7 +11,6 @@ class StockManager():
         # create table object with attributes
         self.MainWindowTable = tksheet.Sheet(MainWindow, headers=["Product", "count"], show_horizontal_grid=True,
                                              expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
-        # self.MainWindowTable.headers(newheaders=["Product", "count"])
 
         # frame for buttons to control table view
         self.MainWindowButtonsLayout = Frame(MainWindow)
@@ -29,15 +28,7 @@ class StockManager():
         self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow()).grid(row=2, column=0, padx=5, pady=5)
         self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow()).grid(row=2, column=1, padx=5, pady=5)
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry").grid(row=4, column=1, ipadx=10, ipady=5)
-        # self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry").place(x=self.MainWindowButtonsLayout.winfo_height() + 253, y=self.MainWindowButtonsLayout.winfo_width() + 128, height=30)
         self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: SearchWindow()).grid(row=4, column=0, padx=35, pady=5, ipadx=10)
-
-        # self.ShowComponentTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Table", command=lambda: ).grid(row=2, column=0, padx=5, pady=5)
-        # self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ).grid(row=2, column=1, padx=5, pady=5)
-        # self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ).grid(row=3, column=0, padx=5, pady=5)
-        # self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry", command=lambda: ).grid(row=4, column=1)
-        # self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry", command=lambda: ).place(x=self.MainWindowButtonsLayout.winfo_height() + 253, y=self.MainWindowButtonsLayout.winfo_width() + 128, height=30)
-        # self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: ).grid(row=4, column=0, padx=(0, 35), pady=(5, 0), ipadx=10)
 
 class AddRemoveComponentWindow(AddRemoveWindow):
     def __init__(self):
@@ -50,14 +41,10 @@ class AddRemoveProductWindow(AddRemoveWindow):
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
     def __init__(self):
         super(ChangeComponentStockStateWindow, self).__init__("component")
-        # self.ChangeComponentStockStateWindowObj = super(ChangeComponentStockStateWindow, self).__init__("component")
-        # self.ChangeComponentStockStateWindowObj = ChangeStockStateWindow("component")
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
     def __init__(self):
         super(ChangeProductStateWindow, self).__init__("component")
-        # self.ChangeProductStateWindowObj = super(ChangeProductStateWindow, self).__init__("component")
-        # self.ChangeProductStateWindowObj = ChangeStockStateWindow("component")
 
 class ShowComponentStockTableWindow():
     def __init__(self):
