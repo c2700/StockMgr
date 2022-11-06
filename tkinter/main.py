@@ -6,9 +6,3 @@ def main():
     StockManager(MainWindow)
     MainWindow.mainloop()
 main()
-
-# Drs International School
-# Seat is Available
-# Survey No. 523, Opp Apparel Park, Gundla Pochhampally, Kompally, Hyderabad, INDIA
-# click here to open the address in Google Maps
-# Survey No. 523, Opp Apparel Park, Gundl
