@@ -1,7 +1,9 @@
+import tkinter
 from tkinter.ttk import *
 import tksheet
 from baseclasses import *
 from tkinter import *
+
 
 class StockManager():
     def __init__(self, MainWindow):
@@ -11,8 +13,6 @@ class StockManager():
         # create table object with attributes
         self.MainWindowTable = tksheet.Sheet(MainWindow, headers=["Product", "count"], show_horizontal_grid=True,
                                              expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
-
-        # frame for buttons to control table view
         self.MainWindowButtonsLayout = Frame(MainWindow)
 
         # placing frames & sheet object in window
@@ -28,19 +28,33 @@ class StockManager():
         self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow()).grid(row=2, column=0, padx=5, pady=5)
         self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow()).grid(row=2, column=1, padx=5, pady=5)
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry").grid(row=4, column=1, ipadx=10, ipady=5)
-        self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: SearchWindow()).grid(row=4, column=0, padx=35, pady=5, ipadx=10)
+        self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: self.SearchWindow()).grid(row=4, column=0, padx=35, pady=5, ipadx=10)
+
+    def SearchWindow(self):
+        SearchPopupWindow = Toplevel()
+        SearchPopupWindow.title = "Search Result"
+
+        SearchPopupWindow.minsize(height=100, width=200)
+
+        SearchString = Label(SearchPopupWindow, text="Found Component")
+        SearchString.grid(row=0, column=0, pady=10, padx=10)
+
+
 
 class AddRemoveComponentWindow(AddRemoveWindow):
     def __init__(self):
         super(AddRemoveComponentWindow, self).__init__("Component")
 
+
 class AddRemoveProductWindow(AddRemoveWindow):
     def __init__(self):
         super(AddRemoveProductWindow, self).__init__("Product")
 
+
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
     def __init__(self):
         super(ChangeComponentStockStateWindow, self).__init__("component")
+
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
     def __init__(self):
@@ -65,10 +79,10 @@ class ShowComponentStockTableWindow():
         self.ChangeComponentStockStateWindowTitle = Label(self.Label_Frame, text="Component Stock Table")
         self.ChangeComponentStockStateWindowTitle.grid()
 
-        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove")
+        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow())
         self.AddRemoveButton.grid(row=0, column=0, padx=10)
 
-        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State")
+        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow())
         self.ChangeStockStateBtn.grid(row=0, column=1, padx=10)
 
         self.ComponentStockTabbedPaneFrame = Frame(self.BottomFrame)
@@ -97,6 +111,7 @@ class ShowComponentStockTableWindow():
 
         self.ComponentStockTabbedPane.pack(expand=True, fill="both")
 
+
 class ShowProductStockTableWindow():
     def __init__(self):
         self.ProductStockTableWindow = Toplevel()
@@ -118,19 +133,101 @@ class ShowProductStockTableWindow():
         self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"])
         self.ProductTable.grid(row=0, column=0, padx=10, pady=10)
 
-        self.AddBtn = Button(self.ButtonFrame, text="Add-Product")
+        self.AddBtn = Button(self.ButtonFrame, text="Add-Product", command=lambda: self.AddProductWindow())
+        self.RemBtn = Button(self.ButtonFrame, text="Remove-Product", command=lambda: self.RemoveProductWindow())
+        self.ProductInfoBtn = Button(self.ButtonFrame, text="About-Product", command=lambda: self.ProductInfoPopup())
         self.AddBtn.grid(column=0, row=0)
-        self.RemBtn = Button(self.ButtonFrame, text="Remove-Product")
         self.RemBtn.grid(column=1, row=0)
-        self.ProductInfoBtn = Button(self.ButtonFrame, text="About-Product")
         self.ProductInfoBtn.grid(column=2, row=0)
 
-class SearchWindow():
-    def __init__(self):
-        self.SearchPopupWindow = Toplevel()
-        self.SearchPopupWindow.title = "Search Result"
+    def ProductInfoPopup(self):
+        ProductInfoWindow = Toplevel()
+        ProductInfoWindow.title = "Product Info"
 
-        self.SearchPopupWindow.minsize(height=100, width=200)
+        WindowTitle = Label(ProductInfoWindow, text="About Product")
+        ProductName = Label(ProductInfoWindow, text="Name: Name")
+        ComponentList = Label(ProductInfoWindow, text="component_list: List - count")
 
-        self.SearchString = Label(self.SearchPopupWindow, text="Found Component")
-        self.SearchString.grid(row=0, column=0, pady=10, padx=10)
+        WindowTitle.grid(row=0, column=0, pady=5, padx=5)
+        ProductName.grid(row=1, column=0, pady=5, padx=5)
+        ComponentList.grid(row=2, column=0, pady=5, padx=5)
+
+    def AddProductWindow(self):
+        AddProductWindowObj = Toplevel()
+        AddProductWindowObj.title = "Add Product"
+
+        LeftFrame = Frame(AddProductWindowObj)
+        MiddleFrame = Frame(AddProductWindowObj)
+        RightFrame = Frame(AddProductWindowObj)
+
+        LeftFrame.grid(row=0, column=0, padx=5, pady=5)
+        MiddleFrame.grid(row=0, column=1, padx=5, pady=5)
+        RightFrame.grid(row=0, column=2, padx=5, pady=5)
+
+
+        ################ LEFT FRAME ######################
+        LeftFrameLabel = Label(LeftFrame, text="Available Component Stock")
+        AddStockListbox = Listbox(LeftFrame)
+        ProcutNameEntryBox = Entry(LeftFrame)
+
+        LeftFrameLabel.grid(row=0, column=0, padx=5, pady=5)
+        AddStockListbox.grid(row=1, column=0, padx=5, pady=5)
+        ProcutNameEntryBox.grid(row=2, column=0, padx=5, pady=5)
+        ##################################################################
+
+
+        ################ MIDDLE FRAME ##################
+        AddBtn = Button(MiddleFrame, text="->")
+        RemoveBtn = Button(MiddleFrame, text="<-")
+        ComponentCountSpinBox = Spinbox(MiddleFrame, width=6)
+
+        AddBtn.grid(row=0, column=0, padx=5, pady=5)
+        RemoveBtn.grid(row=1, column=0, padx=5, pady=5)
+        ComponentCountSpinBox.grid(row=2, column=0, padx=5, pady=5)
+        ##################################################################
+
+
+        ################ RIGHT FRAME ##################
+        RightFrameLabel = Label(RightFrame, text="Component Stock For Product")
+        RemoveStockListbox = Listbox(RightFrame)
+        DoneBtn = Button(RightFrame, text="Done", command=lambda: AddProductWindowObj.destroy())
+
+        RightFrameLabel.grid(row=0, column=0, padx=5, pady=5)
+        RemoveStockListbox.grid(row=1, column=0, padx=5, pady=5)
+        DoneBtn.grid(row=2, column=0, padx=5, pady=5)
+        ##################################################################
+
+
+    def RemoveProductWindow(self):
+        RemoveProductWindow = Toplevel()
+        RemoveProductWindow.title = "Remove Product"
+        RemoveProductWindow.minsize(width=800, height=600)
+
+        TopFrame = Frame(RemoveProductWindow)
+        TopFrame.grid(row=0, column=0, padx=5, pady=5)
+        BottomFrame = Frame(RemoveProductWindow)
+        BottomFrame.grid(row=1, column=0, padx=5, pady=5)
+
+        Title = Label(BottomFrame, text="Remove Product")
+        Title.grid(row=0, column=0, padx=5, pady=5)
+
+        ProductTable = tksheet.Sheet(BottomFrame, headers=["Product Name"])
+        BtnsFrame = Frame(BottomFrame)
+        ProductTable.grid(row=0, column=0, padx=5, pady=5)
+        BtnsFrame.grid(row=0, column=1, padx=5, pady=5)
+
+
+        RemoveSelectedBtn = Button(BtnsFrame, text="Remove Selected", width=16)
+        RemoveUnselectedBtn = Button(BtnsFrame, text="Remove Unselected", width=16)
+        SelectAllBtn = Button(BtnsFrame, text="Select All", width=16)
+        UnselectAllBtn = Button(BtnsFrame, text="Unselect All", width=16)
+        InvertSelectionBtn = Button(BtnsFrame, text="Invert Selection", width=16)
+        DoneBtn = Button(BtnsFrame, text="Done", width=16, command=lambda: RemoveProductWindow.destroy())
+        RemoveSelectedBtn.grid(row=0, column=0, padx=5, pady=5)
+        RemoveUnselectedBtn.grid(row=0, column=1, padx=5, pady=5)
+        SelectAllBtn.grid(row=1, column=0, padx=5, pady=5)
+        UnselectAllBtn.grid(row=1, column=1, padx=5, pady=5)
+        InvertSelectionBtn.grid(row=2, column=0, padx=5, pady=5)
+        DoneBtn.grid(row=2, column=1, padx=5, pady=5)
+
+

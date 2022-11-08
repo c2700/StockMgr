@@ -6,3 +6,4 @@ def main():
     StockManager(MainWindow)
     MainWindow.mainloop()
 main()
+
