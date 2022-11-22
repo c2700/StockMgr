@@ -43,7 +43,7 @@ class AddRemoveWindow():
         self.label = Label(self.TopFrame, text=self.title).grid(row=0, column=0, ipadx=10, ipady=10)
         self.component_entry_name = Entry(self.TopFrame, width=30).grid(row=1, column=0, ipady=2, padx=2, pady=2)
         self.component_quntity_spinbox = Spinbox(self.TopFrame, width=7, increment=True).grid(row=1, column=1, ipady=2, padx=10, pady=10)
-        self.add_btn = Button(self.BottomFrame, text="add").grid(row=0, column=0, padx=2, pady=2)
-        self.rem_btn = Button(self.BottomFrame, text="remove").grid(row=0, column=1, padx=2, pady=2)
+        self.add_btn = Button(self.BottomFrame, text="add", command="").grid(row=0, column=0, padx=2, pady=2)
+        self.rem_btn = Button(self.BottomFrame, text="remove", command="").grid(row=0, column=1, padx=2, pady=2)
 
 

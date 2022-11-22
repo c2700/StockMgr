@@ -1,26 +1,25 @@
 from mysql.connector import *
 
-def FetchProduct():
+
+def FetchProduct(product_name):
     pass
 
-def FetchProductCount():
-    pass
 
 def FetchAllProducts():
     pass
 
-def FetchComponentsPerProduct():
+
+def FetchComponentsPerProduct(product_name):
     pass
 
-def FetchComponent():
+
+def FetchComponent(component_name):
     pass
 
-def FetchComponentCount():
-    pass
 
 def FetchAllComponents():
     pass
 
-# def Fetch():
-#     pass
 
+def AddColumn(table_name, column_name, count):
+    pass

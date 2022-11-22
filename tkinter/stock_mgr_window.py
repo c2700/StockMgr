@@ -1,12 +1,18 @@
-import tkinter
 from tkinter.ttk import *
 import tksheet
 from baseclasses import *
 from tkinter import *
+from sqlite3 import *
 
 
 class StockManager():
     def __init__(self, MainWindow):
+        self.db_obj = None
+        try:
+            self.db_obj = connect("StockData.sqlite3")
+            print("fuck yea")
+        except:
+            print("WTF IS RONG IS WID DIS MACHINE AAAGGGHHHH")
         MainWindow.title("Stock Manager")
         MainWindow.geometry("1200x700")
 
@@ -40,28 +46,32 @@ class StockManager():
         SearchString.grid(row=0, column=0, pady=10, padx=10)
 
 
-
 class AddRemoveComponentWindow(AddRemoveWindow):
-    def __init__(self):
+    def __init__(self, conn_obj):
+        self.conn_obj = conn_obj
         super(AddRemoveComponentWindow, self).__init__("Component")
 
 
 class AddRemoveProductWindow(AddRemoveWindow):
-    def __init__(self):
+    def __init__(self, conn_obj):
+        self.conn_obj = conn_obj
         super(AddRemoveProductWindow, self).__init__("Product")
 
 
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
-    def __init__(self):
+    def __init__(self, conn_obj):
+        self.conn_obj = conn_obj
         super(ChangeComponentStockStateWindow, self).__init__("component")
 
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
-    def __init__(self):
+    def __init__(self, conn_obj):
+        self.conn_obj = conn_obj
         super(ChangeProductStateWindow, self).__init__("component")
 
 class ShowComponentStockTableWindow():
-    def __init__(self):
+    def __init__(self, conn_obj):
+        self.conn_obj = conn_obj
         self.ComponentStockTableWindow = Toplevel()
         self.ComponentStockTableWindow.title = "Component Stock Table"
         self.ComponentStockTableWindow.geometry("500x500")
@@ -113,7 +123,8 @@ class ShowComponentStockTableWindow():
 
 
 class ShowProductStockTableWindow():
-    def __init__(self):
+    def __init__(self, conn_obj):
+        self.conn_obj = conn_obj
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
@@ -141,6 +152,7 @@ class ShowProductStockTableWindow():
         self.ProductInfoBtn.grid(column=2, row=0)
 
     def ProductInfoPopup(self):
+
         ProductInfoWindow = Toplevel()
         ProductInfoWindow.title = "Product Info"
 
@@ -196,7 +208,6 @@ class ShowProductStockTableWindow():
         RemoveStockListbox.grid(row=1, column=0, padx=5, pady=5)
         DoneBtn.grid(row=2, column=0, padx=5, pady=5)
         ##################################################################
-
 
     def RemoveProductWindow(self):
         RemoveProductWindow = Toplevel()
