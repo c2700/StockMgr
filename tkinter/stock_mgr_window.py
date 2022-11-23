@@ -5,73 +5,91 @@ from tkinter import *
 from sqlite3 import *
 
 
-class StockManager():
+class StockManager:
     def __init__(self, MainWindow):
-        self.db_obj = None
+        self.MainWindow = MainWindow
+
+
+        self.db_conn_obj = None
         try:
-            self.db_obj = connect("StockData.sqlite3")
+
+            self.db_conn_obj = connect("StockData.sqlite3")
             print("fuck yea")
         except:
-            print("WTF IS RONG IS WID DIS MACHINE AAAGGGHHHH")
-        MainWindow.title("Stock Manager")
-        MainWindow.geometry("1200x700")
+            print("WTF IS RONG IS WID DIS MACHINE.....AAAGGGHHHH")
+
+
+        self.MainWindow.title("Stock Manager")
+        self.MainWindow.geometry("1200x700")
 
         # create table object with attributes
-        self.MainWindowTable = tksheet.Sheet(MainWindow, headers=["Product", "count"], show_horizontal_grid=True,
+        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count"], show_horizontal_grid=True,
                                              expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
-        self.MainWindowButtonsLayout = Frame(MainWindow)
+        self.MainWindowButtonsLayout = Frame(self.MainWindow)
 
         # placing frames & sheet object in window
         self.MainWindowTable.grid(row=0, column=0, padx=10, pady=10)
         self.MainWindowButtonsLayout.grid(row=0, column=1, pady=(0, 150))
 
         # creating buttons in table view frame
-        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow()).grid(row=0, column=0, padx=5, pady=5)
-        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow()).grid(row=0, column=1, padx=5, pady=5)
-        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow()).grid(row=1, column=0, padx=5, pady=5)
-        self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow()).grid(row=1, column=1, padx=5, pady=5)
+        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(db_conn_obj=self.db_conn_obj))
+        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(db_conn_obj=self.db_conn_obj))
+        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(db_conn_obj=self.db_conn_obj))
+        self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_conn_obj=self.db_conn_obj))
+        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_conn_obj=self.db_conn_obj))
+        self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_conn_obj=self.db_conn_obj))
+        self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry")
+        self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: self.SearchWindow())
 
-        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow()).grid(row=2, column=0, padx=5, pady=5)
-        self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow()).grid(row=2, column=1, padx=5, pady=5)
-        self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry").grid(row=4, column=1, ipadx=10, ipady=5)
-        self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: self.SearchWindow()).grid(row=4, column=0, padx=35, pady=5, ipadx=10)
+        # arraning ui elements
+        self.AddRemComponentBtn.grid(row=0, column=0, padx=5, pady=5)
+        self.AddRemProductBTn.grid(row=0, column=1, padx=5, pady=5)
+        self.ChangeComponentStockStateBTn.grid(row=1, column=0, padx=5, pady=5)
+        self.ChangeProductStockStateBTn.grid(row=1, column=1, padx=5, pady=5)
+        self.ShowStockTableBTn.grid(row=2, column=0, padx=5, pady=5)
+        self.ShowProductTableBTn.grid(row=2, column=1, padx=5, pady=5)
+        self.SearchComponentEntry.grid(row=4, column=1, ipadx=10, ipady=5)
+        self.SearchComponentBTn.grid(row=4, column=0, padx=35, pady=5, ipadx=10)
+
+    def CloseApp(self):
+        try:
+            self.db_conn_obj.close()
+            print("HOLY SHIT IT WORX")
+        except:
+            pass
+        self.MainWindow.destroy()
 
     def SearchWindow(self):
         SearchPopupWindow = Toplevel()
         SearchPopupWindow.title = "Search Result"
-
         SearchPopupWindow.minsize(height=100, width=200)
-
         SearchString = Label(SearchPopupWindow, text="Found Component")
         SearchString.grid(row=0, column=0, pady=10, padx=10)
 
 
 class AddRemoveComponentWindow(AddRemoveWindow):
-    def __init__(self, conn_obj):
-        self.conn_obj = conn_obj
-        super(AddRemoveComponentWindow, self).__init__("Component")
+    def __init__(self, db_conn_obj):
+        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_conn_obj=db_conn_obj, table_name="ComponentStock")
 
 
 class AddRemoveProductWindow(AddRemoveWindow):
-    def __init__(self, conn_obj):
-        self.conn_obj = conn_obj
-        super(AddRemoveProductWindow, self).__init__("Product")
+    def __init__(self, db_conn_obj):
+        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_conn_obj=db_conn_obj, table_name="ProductStock")
 
 
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
-    def __init__(self, conn_obj):
-        self.conn_obj = conn_obj
-        super(ChangeComponentStockStateWindow, self).__init__("component")
+    def __init__(self, db_conn_obj):
+        super(ChangeComponentStockStateWindow, self).__init__(stock_type_text="component", db_conn_obj=db_conn_obj, table_name="ComponentStock")
 
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
-    def __init__(self, conn_obj):
-        self.conn_obj = conn_obj
-        super(ChangeProductStateWindow, self).__init__("component")
+    def __init__(self, db_conn_obj):
+        super(ChangeProductStateWindow, self).__init__(stock_type_text="component", db_conn_obj=db_conn_obj, table_name="ProductStock")
+
 
 class ShowComponentStockTableWindow():
-    def __init__(self, conn_obj):
-        self.conn_obj = conn_obj
+    def __init__(self, db_conn_obj):
+        self.db_conn_obj = db_conn_obj
         self.ComponentStockTableWindow = Toplevel()
         self.ComponentStockTableWindow.title = "Component Stock Table"
         self.ComponentStockTableWindow.geometry("500x500")
@@ -123,8 +141,8 @@ class ShowComponentStockTableWindow():
 
 
 class ShowProductStockTableWindow():
-    def __init__(self, conn_obj):
-        self.conn_obj = conn_obj
+    def __init__(self, db_conn_obj):
+        self.db_conn_obj = db_conn_obj
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
