@@ -1,5 +1,4 @@
 from stock_mgr_window import *
-from sqlite3 import *
 
 
 def main():

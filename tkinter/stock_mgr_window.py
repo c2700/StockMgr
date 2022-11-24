@@ -1,8 +1,10 @@
 from tkinter.ttk import *
 import tksheet
-from baseclasses import *
 from tkinter import *
 from sqlite3 import *
+
+from baseclasses import *
+from db_ops import *
 
 
 class StockManager:
@@ -56,7 +58,7 @@ class StockManager:
             self.db_conn_obj.close()
             print("HOLY SHIT IT WORX")
         except:
-            pass
+            print("NOOOOOOOOO....THE DB IS A ZOMBEEEEEE")
         self.MainWindow.destroy()
 
     def SearchWindow(self):
@@ -87,7 +89,7 @@ class ChangeProductStateWindow(ChangeStockStateWindow):
         super(ChangeProductStateWindow, self).__init__(stock_type_text="component", db_conn_obj=db_conn_obj, table_name="ProductStock")
 
 
-class ShowComponentStockTableWindow():
+class ShowComponentStockTableWindow:
     def __init__(self, db_conn_obj):
         self.db_conn_obj = db_conn_obj
         self.ComponentStockTableWindow = Toplevel()
@@ -140,9 +142,8 @@ class ShowComponentStockTableWindow():
         self.ComponentStockTabbedPane.pack(expand=True, fill="both")
 
 
-class ShowProductStockTableWindow():
+class ShowProductStockTableWindow:
     def __init__(self, db_conn_obj):
-        self.db_conn_obj = db_conn_obj
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
