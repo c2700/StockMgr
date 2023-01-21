@@ -1,0 +1,5 @@
+StockData.sqlite3
+__pycache__
+mysql.cnf
+db
+
