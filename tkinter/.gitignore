@@ -3,4 +3,5 @@ __pycache__
 mysql.cnf
 db
 .idea
+../.idea
 

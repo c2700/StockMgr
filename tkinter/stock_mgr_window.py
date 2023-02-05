@@ -1,32 +1,50 @@
 from tkinter.ttk import *
+
+import mariadb.connections
 import tksheet
 from tkinter import *
-from sqlite3 import *
-
+from mariadb import connect
 from baseclasses import *
 from db_ops import *
 
-
-class StockManager:
+class StockManager():
     def __init__(self, MainWindow):
         self.MainWindow = MainWindow
-
-
         self.db_conn_obj = None
+        self.db_cursor = None
+
+        self.stock_state_dict = {
+            0: "in-stock",
+            1: "out-of stock",
+            2: "lost",
+            3: "damaged",
+            4: "defective",
+            5: "rejected",
+            6: "ordered",
+        }
+
         try:
-
-            self.db_conn_obj = connect("StockData.sqlite3")
-            print("fuck yea")
-        except:
-            print("WTF IS RONG IS WID DIS MACHINE.....AAAGGGHHHH")
-
+            self.db_conn_obj = connect(user='blank',
+                                  host="localhost",
+                                  database="StockDB",
+                                  unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/mysqld.sock")
+                                  # port="3306")
+            self.db_cursor = self.db_conn_obj.cursor()
+            print("FUCK YEA!!!!!!")
+        except Exception as e:
+            print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
+            # exit(1)
 
         self.MainWindow.title("Stock Manager")
         self.MainWindow.geometry("1200x700")
 
-        # create table object with attributes
-        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count"], show_horizontal_grid=True,
-                                             expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
+        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count", "stock_state"],
+                                             show_horizontal_grid=True, expand_sheet_if_paste_too_big=True,
+                                             show_vertical_grid=True,
+                                             data=self.MainWindowTableData(db_cursor=self.db_cursor))
+
+        # self.MainWindowTable.set_row_data()
+
         self.MainWindowButtonsLayout = Frame(self.MainWindow)
 
         # placing frames & sheet object in window
@@ -34,11 +52,15 @@ class StockManager:
         self.MainWindowButtonsLayout.grid(row=0, column=1, pady=(0, 150))
 
         # creating buttons in table view frame
-        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(db_conn_obj=self.db_conn_obj))
-        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(db_conn_obj=self.db_conn_obj))
-        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(db_conn_obj=self.db_conn_obj))
+        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(
+            db_cursor=self.db_conn_obj))
+        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(
+            db_cursor=self.db_conn_obj))
+        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(
+            db_cursor=self.db_conn_obj))
         self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_conn_obj=self.db_conn_obj))
-        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_conn_obj=self.db_conn_obj))
+        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(
+            db_cursor=self.db_conn_obj))
         self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_conn_obj=self.db_conn_obj))
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry")
         self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: self.SearchWindow())
@@ -53,12 +75,30 @@ class StockManager:
         self.SearchComponentEntry.grid(row=4, column=1, ipadx=10, ipady=5)
         self.SearchComponentBTn.grid(row=4, column=0, padx=35, pady=5, ipadx=10)
 
+    def MainWindowTableData(self, db_cursor):
+        try:
+            db_cursor.execute("SELECT * FROM ComponentStock")
+            db_data_set_list = db_cursor.fetchall()
+            data_list = []
+            if db_data_set_list is None:
+                print("SHIIIIITTTTT")
+            if db_data_set_list is not None:
+                for i in db_data_set_list:
+                    temp_data_list = list(i)
+                    stock_state = temp_data_list[2]
+                    temp_data_list[2] = self.stock_state_dict[int(stock_state)]
+                    data_list += [temp_data_list]
+                return data_list
+        except Exception as e:
+            print("WTF IS RONG WID DIS DB???? ", e)
+
     def CloseApp(self):
         try:
+            self.db_cursor.close()
             self.db_conn_obj.close()
             print("HOLY SHIT IT WORX")
-        except:
-            print("NOOOOOOOOO....THE DB IS A ZOMBEEEEEE")
+        except Exception as e:
+            print("NOOOOOOOOO....THE DB IS A ZOMBEEEEEE", e)
         self.MainWindow.destroy()
 
     def SearchWindow(self):
@@ -70,28 +110,28 @@ class StockManager:
 
 
 class AddRemoveComponentWindow(AddRemoveWindow):
-    def __init__(self, db_conn_obj):
-        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_conn_obj=db_conn_obj, table_name="ComponentStock")
+    def __init__(self, db_cursor):
+        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_conn_obj=db_cursor, table_name="ComponentStock")
 
 
 class AddRemoveProductWindow(AddRemoveWindow):
-    def __init__(self, db_conn_obj):
-        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_conn_obj=db_conn_obj, table_name="ProductStock")
+    def __init__(self, db_cursor):
+        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_conn_obj=db_cursor, table_name="ProductStock")
 
 
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
-    def __init__(self, db_conn_obj):
-        super(ChangeComponentStockStateWindow, self).__init__(stock_type_text="component", db_conn_obj=db_conn_obj, table_name="ComponentStock")
+    def __init__(self, db_cursor):
+        super(ChangeComponentStockStateWindow, self).__init__(stock_type_text="Component", db_conn_obj=db_cursor, table_name="ComponentStock")
 
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
     def __init__(self, db_conn_obj):
-        super(ChangeProductStateWindow, self).__init__(stock_type_text="component", db_conn_obj=db_conn_obj, table_name="ProductStock")
+        super(ChangeProductStateWindow, self).__init__(stock_type_text="Component", db_conn_obj=db_conn_obj, table_name="ProductStock")
 
 
 class ShowComponentStockTableWindow:
-    def __init__(self, db_conn_obj):
-        self.db_conn_obj = db_conn_obj
+    def __init__(self, db_cursor):
+        self.db_conn_obj = db_cursor
         self.ComponentStockTableWindow = Toplevel()
         self.ComponentStockTableWindow.title = "Component Stock Table"
         self.ComponentStockTableWindow.geometry("500x500")
@@ -109,10 +149,12 @@ class ShowComponentStockTableWindow:
         self.ChangeComponentStockStateWindowTitle = Label(self.Label_Frame, text="Component Stock Table")
         self.ChangeComponentStockStateWindowTitle.grid()
 
-        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow())
+        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(
+            db_cursor=db_cursor))
         self.AddRemoveButton.grid(row=0, column=0, padx=10)
 
-        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow())
+        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(
+            db_cursor=db_cursor))
         self.ChangeStockStateBtn.grid(row=0, column=1, padx=10)
 
         self.ComponentStockTabbedPaneFrame = Frame(self.BottomFrame)
@@ -142,8 +184,9 @@ class ShowComponentStockTableWindow:
         self.ComponentStockTabbedPane.pack(expand=True, fill="both")
 
 
-class ShowProductStockTableWindow:
+class ShowProductStockTableWindow(DefaultValues):
     def __init__(self, db_conn_obj):
+        self.DefaultValuesObj = super(ShowProductStockTableWindow, self).__init__()
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
@@ -160,7 +203,8 @@ class ShowProductStockTableWindow:
         self.Title = Label(self.TitleFrame, text="Product Table")
         self.Title.grid()
 
-        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"])
+        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"],
+                                          data=None)
         self.ProductTable.grid(row=0, column=0, padx=10, pady=10)
 
         self.AddBtn = Button(self.ButtonFrame, text="Add-Product", command=lambda: self.AddProductWindow())
@@ -169,6 +213,18 @@ class ShowProductStockTableWindow:
         self.AddBtn.grid(column=0, row=0)
         self.RemBtn.grid(column=1, row=0)
         self.ProductInfoBtn.grid(column=2, row=0)
+
+    def MainWindowTableData(self, db_cursor):
+        db_data_set_list = db_cursor.execute("SELECT * FROM ProductStock").fetchall()
+        data_list = []
+
+        for i in db_data_set_list:
+            temp_data_list = list(i)
+            stock_state = temp_data_list[2]
+            temp_data_list[2] = self.stock_state_dict[stock_state]
+            data_list += [temp_data_list]
+        return data_list
+
 
     def ProductInfoPopup(self):
 
