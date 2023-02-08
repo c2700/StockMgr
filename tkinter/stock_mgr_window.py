@@ -5,14 +5,12 @@ from mariadb import connect
 from baseclasses import *
 from db_ops import *
 
-class StockManager(DefaultValues):
+class StockManager():
     def __init__(self, MainWindow):
-        super(StockManager, self).__init__()
         self.MainWindow = MainWindow
         self.db_conn_obj = None
         self.db_cursor = None
 
-        '''
         self.stock_state_dict = {
             0: "in-stock",
             1: "out-of stock",
@@ -22,7 +20,6 @@ class StockManager(DefaultValues):
             5: "rejected",
             6: "ordered",
         }
-        '''
 
         try:
             self.db_conn_obj = connect(user='blank',
@@ -142,12 +139,12 @@ class ShowComponentStockTableWindow:
         self.BottomFrame = Frame(self.ComponentStockTableWindow)
         self.BottomFrame.grid(column=0, row=1)
 
-        self.LabelFrame = Frame(self.TopFrame)
-        self.LabelFrame.grid(column=0, row=0, pady=5)
+        self.Label_Frame = Frame(self.TopFrame)
+        self.Label_Frame.grid(column=0, row=0, pady=5)
         self.Button_Frame = Frame(self.TopFrame)
         self.Button_Frame.grid(column=0, row=1, pady=5)
 
-        self.ChangeComponentStockStateWindowTitle = Label(self.LabelFrame, text="Component Stock Table")
+        self.ChangeComponentStockStateWindowTitle = Label(self.Label_Frame, text="Component Stock Table")
         self.ChangeComponentStockStateWindowTitle.grid()
 
         self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(
@@ -167,7 +164,7 @@ class ShowComponentStockTableWindow:
         self.DefectiveTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
         self.RejectedTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
         self.LostTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
-        self.OutOfStockTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name"])
+        self.OutOfStockTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
         self.AvailableTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
 
         self.DefectiveTab.pack(fill="both", expand=True)
