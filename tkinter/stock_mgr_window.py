@@ -1,6 +1,4 @@
 from tkinter.ttk import *
-
-import mariadb.connections
 import tksheet
 from tkinter import *
 from mariadb import connect
@@ -45,7 +43,6 @@ class StockManager(DefaultValues):
                                              show_horizontal_grid=True, expand_sheet_if_paste_too_big=True,
                                              show_vertical_grid=True,
                                              data=self.MainWindowTableData(db_cursor=self.db_cursor))
-
         # self.MainWindowTable.set_row_data()
 
         self.MainWindowButtonsLayout = Frame(self.MainWindow)
@@ -80,7 +77,7 @@ class StockManager(DefaultValues):
 
     def MainWindowTableData(self, db_cursor):
         try:
-            db_cursor.execute("SELECT * FROM ComponentStock")
+            db_cursor.execute("SELECT * FROM ProductStock")
             db_data_set_list = db_cursor.fetchall()
             data_list = []
             if db_data_set_list is None:
@@ -88,7 +85,7 @@ class StockManager(DefaultValues):
             if db_data_set_list is not None:
                 for i in db_data_set_list:
                     temp_data_list = list(i)
-                    stock_state = temp_data_list[2]
+                    stock_state = 0 if temp_data_list[2] > 0 else 1
                     temp_data_list[2] = self.stock_state_dict[int(stock_state)]
                     data_list += [temp_data_list]
                 return data_list
@@ -97,9 +94,10 @@ class StockManager(DefaultValues):
 
     def CloseApp(self):
         try:
-            self.db_cursor.close()
-            self.db_conn_obj.close()
-            print("HOLY SHIT IT WORX")
+            if self.db_cursor.close():
+                print("MOMENT of TRUTH")
+            if self.db_conn_obj.close():
+                print("HOLY SHIT IT WORX")
         except Exception as e:
             print("NOOOOOOOOO....THE DB IS A ZOMBEEEEEE", e)
         self.MainWindow.destroy()
