@@ -64,7 +64,9 @@ class AddRemoveWindow:
         self.label = Label(self.TopFrame, text=self.title)
 
         self.component_entry_name = Entry(self.TopFrame, width=30)
-        self.component_quantity_spinbox = Spinbox(self.TopFrame, width=7, increment=True)
+
+        # Make the "from_" & "to" args dynamic
+        self.component_quantity_spinbox = Spinbox(self.TopFrame, width=7, increment=1, from_=0, to=5000)
 
         def AddTableRow():
             self.db_ops_obj.AddRow(table_name=self.table_name, Name=self.component_entry_name.get(),
