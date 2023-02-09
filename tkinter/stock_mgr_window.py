@@ -11,9 +11,6 @@ class StockManager(DefaultValues):
         self.MainWindow = MainWindow
         self.db_conn_obj = None
         self.db_cursor = None
-        # self.DefaultValues = DefaultValues()
-        # self.stock_state_dict = self.DefaultValues.stock_state_dict
-        # self.tkSheetTable = self.DefaultValues.tkSheetTable()
 
         try:
             self.db_conn_obj = connect(user='blank',
@@ -25,7 +22,6 @@ class StockManager(DefaultValues):
             print("FUCK YEA!!!!!!")
         except Exception as e:
             print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
-            # exit(1)
 
         self.MainWindow.title("Stock Manager")
         self.MainWindow.geometry("1200x700")

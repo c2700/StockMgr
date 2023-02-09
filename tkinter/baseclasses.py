@@ -1,5 +1,4 @@
 import tkinter
-from tksheet import Sheet
 from tkinter import Frame, Button, Entry, Toplevel, Label, Spinbox
 from tkinter.ttk import Combobox
 from db_ops import *
@@ -99,7 +98,6 @@ class AddRemoveWindow:
 
 class DefaultValues():
     def __init__(self):
-        super(DefaultValues, self).__init__()
         self.stock_state_dict = {
             0: "in-stock",
             1: "out-of stock",
