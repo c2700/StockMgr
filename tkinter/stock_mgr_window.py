@@ -5,21 +5,15 @@ from mariadb import connect
 from baseclasses import *
 from db_ops import *
 
-class StockManager():
+class StockManager(DefaultValues):
     def __init__(self, MainWindow):
+        super(StockManager, self).__init__()
         self.MainWindow = MainWindow
         self.db_conn_obj = None
         self.db_cursor = None
-
-        self.stock_state_dict = {
-            0: "in-stock",
-            1: "out-of stock",
-            2: "lost",
-            3: "damaged",
-            4: "defective",
-            5: "rejected",
-            6: "ordered",
-        }
+        # self.DefaultValues = DefaultValues()
+        # self.stock_state_dict = self.DefaultValues.stock_state_dict
+        # self.tkSheetTable = self.DefaultValues.tkSheetTable()
 
         try:
             self.db_conn_obj = connect(user='blank',
@@ -36,11 +30,16 @@ class StockManager():
         self.MainWindow.title("Stock Manager")
         self.MainWindow.geometry("1200x700")
 
-        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count", "stock_state"],
-                                             show_horizontal_grid=True, expand_sheet_if_paste_too_big=True,
-                                             show_vertical_grid=True,
-                                             data=self.MainWindowTableData(db_cursor=self.db_cursor))
-        # self.MainWindowTable.set_row_data()
+        def ShiftSelection():
+            pass
+
+        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count", "stock_state"], data=self.MainWindowTableData(db_cursor=self.db_cursor), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
+        self.MainWindowTable.set_all_cell_sizes_to_text()
+        self.MainWindowTable.enable_bindings("all")
+        self.MainWindowTable.edit_bindings(True)
+        self.MainWindowTable.basic_bindings(enable=True)
+        self.MainWindowTable.tk_focusFollowsMouse()
+        self.MainWindowTable.extra_bindings(bindings="bind_all", func=lambda event: ShiftSelection)
 
         self.MainWindowButtonsLayout = Frame(self.MainWindow)
 
@@ -49,20 +48,16 @@ class StockManager():
         self.MainWindowButtonsLayout.grid(row=0, column=1, pady=(0, 150))
 
         # creating buttons in table view frame
-        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(
-            db_cursor=self.db_conn_obj))
-        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(
-            db_cursor=self.db_conn_obj))
-        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(
-            db_cursor=self.db_conn_obj))
-        self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_conn_obj=self.db_conn_obj))
-        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(
-            db_cursor=self.db_conn_obj))
-        self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_conn_obj=self.db_conn_obj))
+        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(db_cursor=self.db_cursor))
+        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(db_cursor=self.db_cursor))
+        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
+        self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_cursor=self.db_cursor))
+        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_cursor=self.db_cursor))
+        self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_cursor=self.db_cursor))
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry")
         self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: self.SearchWindow())
 
-        # arraning ui elements
+        # arranging ui elements
         self.AddRemComponentBtn.grid(row=0, column=0, padx=5, pady=5)
         self.AddRemProductBTn.grid(row=0, column=1, padx=5, pady=5)
         self.ChangeComponentStockStateBTn.grid(row=1, column=0, padx=5, pady=5)
@@ -123,13 +118,15 @@ class ChangeComponentStockStateWindow(ChangeStockStateWindow):
 
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
-    def __init__(self, db_conn_obj):
-        super(ChangeProductStateWindow, self).__init__(stock_type_text="Component", db_conn_obj=db_conn_obj, table_name="ProductStock")
-
-
-class ShowComponentStockTableWindow:
     def __init__(self, db_cursor):
+        super(ChangeProductStateWindow, self).__init__(stock_type_text="Component", db_conn_obj=db_cursor, table_name="ProductStock")
+
+
+class ShowComponentStockTableWindow(DefaultValues):
+    def __init__(self, db_cursor):
+        super(ShowComponentStockTableWindow, self).__init__()
         self.db_conn_obj = db_cursor
+
         self.ComponentStockTableWindow = Toplevel()
         self.ComponentStockTableWindow.title = "Component Stock Table"
         self.ComponentStockTableWindow.geometry("500x500")
@@ -139,20 +136,19 @@ class ShowComponentStockTableWindow:
         self.BottomFrame = Frame(self.ComponentStockTableWindow)
         self.BottomFrame.grid(column=0, row=1)
 
-        self.Label_Frame = Frame(self.TopFrame)
-        self.Label_Frame.grid(column=0, row=0, pady=5)
+        self.LabelFrame = Frame(self.TopFrame)
+        self.LabelFrame.grid(column=0, row=0, pady=5)
         self.Button_Frame = Frame(self.TopFrame)
         self.Button_Frame.grid(column=0, row=1, pady=5)
 
-        self.ChangeComponentStockStateWindowTitle = Label(self.Label_Frame, text="Component Stock Table")
+        self.ChangeComponentStockStateWindowTitle = Label(self.LabelFrame, text="Component Stock Table")
         self.ChangeComponentStockStateWindowTitle.grid()
 
         self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(
-            db_cursor=db_cursor))
+            db_cursor=self.db_conn_obj))
         self.AddRemoveButton.grid(row=0, column=0, padx=10)
 
-        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(
-            db_cursor=db_cursor))
+        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_conn_obj))
         self.ChangeStockStateBtn.grid(row=0, column=1, padx=10)
 
         self.ComponentStockTabbedPaneFrame = Frame(self.BottomFrame)
@@ -160,12 +156,24 @@ class ShowComponentStockTableWindow:
 
         self.ComponentStockTabbedPane = Notebook(self.ComponentStockTabbedPaneFrame)
         self.ComponentStockTabbedPane.grid(row=1, column=0)
+        available_component_list, defective_component_list, rejected_component_list, lost_component_list, out_of_stock_component_list = self.ComponentWindowTableData(db_cursor=self.db_conn_obj)
 
-        self.DefectiveTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
-        self.RejectedTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
-        self.LostTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
-        self.OutOfStockTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
-        self.AvailableTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"])
+
+        self.AvailableTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=available_component_list, align="center")
+        self.DefectiveTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=defective_component_list, align="center")
+        self.RejectedTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=rejected_component_list, align="center")
+        self.LostTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=lost_component_list, align="center")
+        self.OutOfStockTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name"], data=out_of_stock_component_list, align="center")
+
+        for object in [self.DefectiveTab, self.RejectedTab, self.LostTab, self.OutOfStockTab, self.AvailableTab]:
+            object.set_options(expand_sheet_if_paste_too_big=True,
+                               page_up_down_select_row=True,
+                               show_horizontal_grid=True,
+                               show_vertical_grid=True)
+
+            object.set_all_cell_sizes_to_text()
+            object.enable_bindings("all")
+
 
         self.DefectiveTab.pack(fill="both", expand=True)
         self.RejectedTab.pack(fill="both", expand=True)
@@ -173,21 +181,73 @@ class ShowComponentStockTableWindow:
         self.OutOfStockTab.pack(fill="both", expand=True)
         self.AvailableTab.pack(fill="both", expand=True)
 
+        self.ComponentStockTabbedPane.add(self.AvailableTab, text="Available")
         self.ComponentStockTabbedPane.add(self.DefectiveTab, text="Defective")
         self.ComponentStockTabbedPane.add(self.RejectedTab, text="Rejected")
         self.ComponentStockTabbedPane.add(self.LostTab, text="Lost")
         self.ComponentStockTabbedPane.add(self.OutOfStockTab, text="Out Of Stock")
-        self.ComponentStockTabbedPane.add(self.AvailableTab, text="Available")
-
         self.ComponentStockTabbedPane.pack(expand=True, fill="both")
+
+    def ComponentWindowTableData(self, db_cursor):
+        try:
+            db_cursor.execute("SELECT * FROM ComponentStock")
+            cs_data_set_list = db_cursor.fetchall()
+
+            db_cursor.execute("SELECT * FROM ComponentStockStateCount")
+            cssc_data_set_list = db_cursor.fetchall()
+
+            available_component_list = []
+            rejected_component_list = []
+            lost_component_list = []
+            defective_component_list = []
+            out_of_stock_component_list = []
+
+            if cs_data_set_list is None or cssc_data_set_list is None:
+                print("SHIIIIITTTTT NOOOOO")
+            if (cs_data_set_list is not None) and (cssc_data_set_list is not None):
+                print("NAAAAYEEEESSSS")
+                '''
+                    loop to display components in "in-stock", "defective", etc states in table
+                '''
+                for a in cssc_data_set_list:
+                    _ComponentStockStateCount_ComponentCode = a[0]
+                    db_cursor.execute(f"SELECT cs.Name FROM ComponentStockStateCount cssc, ComponentStock cs WHERE cssc.`Component Code` = cs.Code AND cs.Code = {_ComponentStockStateCount_ComponentCode}")
+                    _ComponentStockStateCount_ComponentName = db_cursor.fetchall()[0][0]
+
+                    _ComponentStockStateCount_in_stock_count = a[1]
+                    _ComponentStockStateCount_rejected_count = a[2]
+                    _ComponentStockStateCount_lost_count = a[3]
+                    _ComponentStockStateCount_defective_count = a[4]
+
+                    if _ComponentStockStateCount_in_stock_count > 0:
+                        available_component_list += [(_ComponentStockStateCount_ComponentName, _ComponentStockStateCount_in_stock_count)]
+                    if _ComponentStockStateCount_rejected_count > 0:
+                        rejected_component_list += [(_ComponentStockStateCount_ComponentName, _ComponentStockStateCount_rejected_count)]
+                    if _ComponentStockStateCount_lost_count > 0:
+                        lost_component_list += [(_ComponentStockStateCount_ComponentName, _ComponentStockStateCount_lost_count)]
+                    if _ComponentStockStateCount_defective_count > 0:
+                        defective_component_list += [(_ComponentStockStateCount_ComponentName, _ComponentStockStateCount_defective_count)]
+
+                    if (len(available_component_list) == 0) and (len(rejected_component_list) == 0) and (len(lost_component_list) == 0) and (len(defective_component_list) == 0):
+                        out_of_stock_component_list += [_ComponentStockStateCount_ComponentName]
+                    elif (len(available_component_list) != 0) and (len(rejected_component_list) != 0) and (len(lost_component_list) != 0) and (len(defective_component_list) != 0):
+                        out_of_stock_component_list = [["all components in-stock"]]
+
+                return available_component_list, rejected_component_list, lost_component_list, defective_component_list, out_of_stock_component_list
+        except Exception as e:
+            print("WTF IS RONG WID DIS DB???? ", e)
+
+
 
 
 class ShowProductStockTableWindow(DefaultValues):
-    def __init__(self, db_conn_obj):
+    def __init__(self, db_cursor):
         self.DefaultValuesObj = super(ShowProductStockTableWindow, self).__init__()
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
+
+        self.db_cursor = db_cursor
 
         self.TitleFrame = Frame(self.ProductStockTableWindow)
         self.TitleFrame.grid(column=0, row=0)
@@ -201,8 +261,7 @@ class ShowProductStockTableWindow(DefaultValues):
         self.Title = Label(self.TitleFrame, text="Product Table")
         self.Title.grid()
 
-        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"],
-                                          data=None)
+        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"], data=self.ProductStockData(db_cursor=self.db_cursor))
         self.ProductTable.grid(row=0, column=0, padx=10, pady=10)
 
         self.AddBtn = Button(self.ButtonFrame, text="Add-Product", command=lambda: self.AddProductWindow())
@@ -212,17 +271,23 @@ class ShowProductStockTableWindow(DefaultValues):
         self.RemBtn.grid(column=1, row=0)
         self.ProductInfoBtn.grid(column=2, row=0)
 
-    def MainWindowTableData(self, db_cursor):
-        db_data_set_list = db_cursor.execute("SELECT * FROM ProductStock").fetchall()
-        data_list = []
-
-        for i in db_data_set_list:
-            temp_data_list = list(i)
-            stock_state = temp_data_list[2]
-            temp_data_list[2] = self.stock_state_dict[stock_state]
-            data_list += [temp_data_list]
-        return data_list
-
+    def ProductStockData(self, db_cursor):
+        print("WTF Y WON'T IT READ???")
+        try:
+            self.db_cursor.execute("SELECT * FROM ProductStock")
+            db_data_set_list = self.db_cursor.fetchall()
+            self.data_list = []
+            if db_data_set_list is None:
+                print("SHIIIIITTTTT")
+            if db_data_set_list is not None:
+                for i in db_data_set_list:
+                    temp_data_list = list(i)
+                    stock_state = 0 if temp_data_list[2] > 0 else 1
+                    temp_data_list[2] = self.stock_state_dict[int(stock_state)]
+                    self.data_list += [temp_data_list]
+                return self.data_list
+        except Exception as e:
+            print("WTF IS RONG WID DIS DB NOOOO 222222 BLAH BLAH???? ", e)
 
     def ProductInfoPopup(self):
 
@@ -238,6 +303,16 @@ class ShowProductStockTableWindow(DefaultValues):
         ComponentList.grid(row=2, column=0, pady=5, padx=5)
 
     def AddProductWindow(self):
+        try:
+            self.db_cursor.execute("SELECT Name FROM ComponentStock")
+            self.component_name_list_for_product = self.db_cursor.fetchall()
+            self._data_list = []
+            for i in self.component_name_list_for_product:
+                _ComponentName = i[0]
+                self._data_list += [_ComponentName]
+        except Exception as e:
+            print(e)
+
         AddProductWindowObj = Toplevel()
         AddProductWindowObj.title = "Add Product"
 
@@ -258,12 +333,14 @@ class ShowProductStockTableWindow(DefaultValues):
         LeftFrameLabel.grid(row=0, column=0, padx=5, pady=5)
         AddStockListbox.grid(row=1, column=0, padx=5, pady=5)
         ProcutNameEntryBox.grid(row=2, column=0, padx=5, pady=5)
+        for i in range(len(self._data_list)):
+            AddStockListbox.insert(i, self._data_list[i])
         ##################################################################
 
 
         ################ MIDDLE FRAME ##################
-        AddBtn = Button(MiddleFrame, text="->")
-        RemoveBtn = Button(MiddleFrame, text="<-")
+        AddBtn = Button(MiddleFrame, text="->", command=lambda event: None)
+        RemoveBtn = Button(MiddleFrame, text="<-", command=lambda event: None)
         ComponentCountSpinBox = Spinbox(MiddleFrame, width=6)
 
         AddBtn.grid(row=0, column=0, padx=5, pady=5)
