@@ -76,6 +76,7 @@ class StockManager(DefaultValues):
                     stock_state = 0 if temp_data_list[2] > 0 else 1
                     temp_data_list[2] = self.stock_state_dict[int(stock_state)]
                     data_list += [temp_data_list]
+                data_list += []
                 return data_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB???? ", e)
@@ -140,8 +141,7 @@ class ShowComponentStockTableWindow(DefaultValues):
         self.ChangeComponentStockStateWindowTitle = Label(self.LabelFrame, text="Component Stock Table")
         self.ChangeComponentStockStateWindowTitle.grid()
 
-        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(
-            db_cursor=self.db_conn_obj))
+        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(db_cursor=self.db_conn_obj))
         self.AddRemoveButton.grid(row=0, column=0, padx=10)
 
         self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_conn_obj))
@@ -227,7 +227,12 @@ class ShowComponentStockTableWindow(DefaultValues):
                     if (len(available_component_list) == 0) and (len(rejected_component_list) == 0) and (len(lost_component_list) == 0) and (len(defective_component_list) == 0):
                         out_of_stock_component_list += [_ComponentStockStateCount_ComponentName]
                     elif (len(available_component_list) != 0) and (len(rejected_component_list) != 0) and (len(lost_component_list) != 0) and (len(defective_component_list) != 0):
-                        out_of_stock_component_list = [["all components in-stock"]]
+                        out_of_stock_component_list = [["all components in-stock"], []]
+
+                available_component_list += [[]]
+                rejected_component_list += [[]]
+                lost_component_list += [[]]
+                defective_component_list += [[]]
 
                 return available_component_list, rejected_component_list, lost_component_list, defective_component_list, out_of_stock_component_list
         except Exception as e:
@@ -257,7 +262,7 @@ class ShowProductStockTableWindow(DefaultValues):
         self.Title = Label(self.TitleFrame, text="Product Table")
         self.Title.grid()
 
-        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"], data=self.ProductStockData(db_cursor=self.db_cursor))
+        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"], data=self.ProductStockData())
         self.ProductTable.grid(row=0, column=0, padx=10, pady=10)
 
         self.AddBtn = Button(self.ButtonFrame, text="Add-Product", command=lambda: self.AddProductWindow())
@@ -267,7 +272,7 @@ class ShowProductStockTableWindow(DefaultValues):
         self.RemBtn.grid(column=1, row=0)
         self.ProductInfoBtn.grid(column=2, row=0)
 
-    def ProductStockData(self, db_cursor):
+    def ProductStockData(self):
         print("WTF Y WON'T IT READ???")
         try:
             self.db_cursor.execute("SELECT * FROM ProductStock")
@@ -281,6 +286,7 @@ class ShowProductStockTableWindow(DefaultValues):
                     stock_state = 0 if temp_data_list[2] > 0 else 1
                     temp_data_list[2] = self.stock_state_dict[int(stock_state)]
                     self.data_list += [temp_data_list]
+                self.data_list += [[]]
                 return self.data_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB NOOOO 222222 BLAH BLAH???? ", e)
