@@ -35,10 +35,10 @@ class ChangeStockStateWindow:
 
 
 class AddRemoveWindow:
-    def __init__(self, title_text, db_conn_obj, table_name):
+    def __init__(self, title_text, db_cursor, table_name):
         self.title_text = title_text
         self.table_name = table_name
-        self.db_ops_obj = DBops(db_conn_obj)
+        self.db_cursor = DBops(db_cursor)
 
         # print("self.title_text -", self.title_text)
         # print("self.table_name -", self.table_name)
@@ -66,8 +66,8 @@ class AddRemoveWindow:
         self.component_quantity_spinbox = Spinbox(self.TopFrame, width=7, increment=True)
 
         def AddTableRow():
-            self.db_ops_obj.AddRow(table_name=self.table_name, Name=self.component_entry_name.get(),
-                                   NameCount=self.component_quantity_spinbox.get())
+            self.db_cursor.AddRow(table_name=self.table_name, Name=self.component_entry_name.get(),
+                                  NameCount=self.component_quantity_spinbox.get())
             # try:
             #     self.db_ops_obj.AddTableRow(table_name=self.table_name, Name=self.component_entry_name.get(),
             #                                 NameCount=self.component_quantity_spinbox.get())
@@ -76,7 +76,7 @@ class AddRemoveWindow:
             #     print("WTF???")
 
         def RemoveTableRow():
-            self.db_ops_obj.RemoveRow(table_name=self.table_name, Name=self.component_entry_name.get())
+            self.db_cursor.RemoveRow(table_name=self.table_name, Name=self.component_entry_name.get())
             # try:
             #     self.db_ops_obj.RemoveTableRow(table_name=self.table_name, Name=self.component_entry_name.get(),
             #                                    NameCount=self.component_quantity_spinbox.get())

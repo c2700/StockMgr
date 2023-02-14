@@ -1,9 +1,12 @@
 from tkinter.ttk import *
+
+import mariadb
 import tksheet
 from tkinter import *
 from mariadb import connect
 from baseclasses import *
 from db_ops import *
+from platform import system
 
 class StockManager(DefaultValues):
     def __init__(self, MainWindow):
@@ -11,17 +14,29 @@ class StockManager(DefaultValues):
         self.MainWindow = MainWindow
         self.db_conn_obj = None
         self.db_cursor = None
-
+        self.db_ops = None
         try:
-            self.db_conn_obj = connect(user='blank',
+            if system() == "Linux":
+                self.db_conn_obj = connect(user='blank',
+                                           host="localhost",
+                                           database="StockDB",
+                                           unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/mysqld.sock")
+            if system() == "Windows":
+                self.db_conn_obj = connect(user='blank',
                                   host="localhost",
                                   database="StockDB",
-                                  unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/mysqld.sock")
-                                  # port="3306")
+                                  port=3306)
+
+
             self.db_cursor = self.db_conn_obj.cursor()
             print("FUCK YEA!!!!!!")
-        except Exception as e:
+            self.db_ops = DBops(db_cursor=self.db_cursor)
+
+        # except Exception as e:
+        #     print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
+        except mariadb.OperationalError as e:
             print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
+            exit(1)
 
         self.MainWindow.title("Stock Manager")
         self.MainWindow.geometry("1200x700")
@@ -29,7 +44,7 @@ class StockManager(DefaultValues):
         def ShiftSelection():
             pass
 
-        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count", "stock_state"], data=self.MainWindowTableData(db_cursor=self.db_cursor), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
+        self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count", "stock_state"], data=self.MainWindowTableData(), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
         self.MainWindowTable.set_all_cell_sizes_to_text()
         self.MainWindowTable.enable_bindings("all")
         self.MainWindowTable.edit_bindings(True)
@@ -63,20 +78,18 @@ class StockManager(DefaultValues):
         self.SearchComponentEntry.grid(row=4, column=1, ipadx=10, ipady=5)
         self.SearchComponentBTn.grid(row=4, column=0, padx=35, pady=5, ipadx=10)
 
-    def MainWindowTableData(self, db_cursor):
+    def MainWindowTableData(self):
         try:
-            db_cursor.execute("SELECT * FROM ProductStock")
-            db_data_set_list = db_cursor.fetchall()
+            db_data_set_list = [self.db_ops.FetchAllProducts(getcount=True, getstockstate=True)]
             data_list = []
             if db_data_set_list is None:
                 print("SHIIIIITTTTT")
             if db_data_set_list is not None:
-                for i in db_data_set_list:
+                for i in db_data_set_list[0]:
                     temp_data_list = list(i)
                     stock_state = 0 if temp_data_list[2] > 0 else 1
                     temp_data_list[2] = self.stock_state_dict[int(stock_state)]
                     data_list += [temp_data_list]
-                data_list += []
                 return data_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB???? ", e)
@@ -101,12 +114,12 @@ class StockManager(DefaultValues):
 
 class AddRemoveComponentWindow(AddRemoveWindow):
     def __init__(self, db_cursor):
-        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_conn_obj=db_cursor, table_name="ComponentStock")
+        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_cursor=db_cursor, table_name="ComponentStock")
 
 
 class AddRemoveProductWindow(AddRemoveWindow):
     def __init__(self, db_cursor):
-        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_conn_obj=db_cursor, table_name="ProductStock")
+        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_cursor=db_cursor, table_name="ProductStock")
 
 
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
@@ -229,11 +242,6 @@ class ShowComponentStockTableWindow(DefaultValues):
                     elif (len(available_component_list) != 0) and (len(rejected_component_list) != 0) and (len(lost_component_list) != 0) and (len(defective_component_list) != 0):
                         out_of_stock_component_list = [["all components in-stock"], []]
 
-                available_component_list += [[]]
-                rejected_component_list += [[]]
-                lost_component_list += [[]]
-                defective_component_list += [[]]
-
                 return available_component_list, rejected_component_list, lost_component_list, defective_component_list, out_of_stock_component_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB???? ", e)
@@ -243,12 +251,13 @@ class ShowComponentStockTableWindow(DefaultValues):
 
 class ShowProductStockTableWindow(DefaultValues):
     def __init__(self, db_cursor):
-        self.DefaultValuesObj = super(ShowProductStockTableWindow, self).__init__()
+        super(ShowProductStockTableWindow, self).__init__()
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
 
         self.db_cursor = db_cursor
+        self.db_ops = DBops(self.db_cursor)
 
         self.TitleFrame = Frame(self.ProductStockTableWindow)
         self.TitleFrame.grid(column=0, row=0)
@@ -275,8 +284,7 @@ class ShowProductStockTableWindow(DefaultValues):
     def ProductStockData(self):
         print("WTF Y WON'T IT READ???")
         try:
-            self.db_cursor.execute("SELECT * FROM ProductStock")
-            db_data_set_list = self.db_cursor.fetchall()
+            db_data_set_list = self.db_ops.FetchAllProducts(getcount=True, getstockstate=True)
             self.data_list = []
             if db_data_set_list is None:
                 print("SHIIIIITTTTT")
@@ -286,7 +294,6 @@ class ShowProductStockTableWindow(DefaultValues):
                     stock_state = 0 if temp_data_list[2] > 0 else 1
                     temp_data_list[2] = self.stock_state_dict[int(stock_state)]
                     self.data_list += [temp_data_list]
-                self.data_list += [[]]
                 return self.data_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB NOOOO 222222 BLAH BLAH???? ", e)
