@@ -33,6 +33,8 @@ class ChangeStockStateWindow:
     def ChangeBtn(self):
         pass
 
+    def MoveItemsBtn(self, from_list, to_list):
+        pass
 
 class AddRemoveWindow:
     def __init__(self, title_text, db_cursor, table_name):

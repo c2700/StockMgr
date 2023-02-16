@@ -1,3 +1,4 @@
+import tkinter.messagebox
 from tkinter.ttk import *
 
 import mariadb
@@ -28,21 +29,22 @@ class StockManager(DefaultValues):
                                   port=3306)
 
 
+
             self.db_cursor = self.db_conn_obj.cursor()
             print("FUCK YEA!!!!!!")
             self.db_ops = DBops(db_cursor=self.db_cursor)
 
         # except Exception as e:
         #     print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
-        except mariadb.OperationalError as e:
+        except mariadb.Error as e:
             print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
             exit(1)
 
         self.MainWindow.title("Stock Manager")
         self.MainWindow.geometry("1200x700")
 
-        def ShiftSelection():
-            pass
+        # def ShiftSelection():
+        #     pass
 
         self.MainWindowTable = tksheet.Sheet(self.MainWindow, headers=["Product", "count", "stock_state"], data=self.MainWindowTableData(), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
         self.MainWindowTable.set_all_cell_sizes_to_text()
@@ -50,7 +52,7 @@ class StockManager(DefaultValues):
         self.MainWindowTable.edit_bindings(True)
         self.MainWindowTable.basic_bindings(enable=True)
         self.MainWindowTable.tk_focusFollowsMouse()
-        self.MainWindowTable.extra_bindings(bindings="bind_all", func=lambda event: ShiftSelection)
+        # self.MainWindowTable.extra_bindings(bindings="bind_all", func=lambda event: ShiftSelection)
 
         self.MainWindowButtonsLayout = Frame(self.MainWindow)
 
@@ -271,7 +273,12 @@ class ShowProductStockTableWindow(DefaultValues):
         self.Title = Label(self.TitleFrame, text="Product Table")
         self.Title.grid()
 
-        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"], data=self.ProductStockData())
+        self.ProductTable = tksheet.Sheet(self.TableFrame, headers=["Name", "Count", "stock state"], data=self.ProductStockData(), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
+        self.ProductTable.enable_bindings("all")
+        self.ProductTable.edit_bindings(True)
+        self.ProductTable.basic_bindings(enable=True)
+        self.ProductTable.tk_focusFollowsMouse()
+
         self.ProductTable.grid(row=0, column=0, padx=10, pady=10)
 
         self.AddBtn = Button(self.ButtonFrame, text="Add-Product", command=lambda: self.AddProductWindow())
@@ -282,7 +289,6 @@ class ShowProductStockTableWindow(DefaultValues):
         self.ProductInfoBtn.grid(column=2, row=0)
 
     def ProductStockData(self):
-        print("WTF Y WON'T IT READ???")
         try:
             db_data_set_list = self.db_ops.FetchAllProducts(getcount=True, getstockstate=True)
             self.data_list = []
@@ -336,37 +342,64 @@ class ShowProductStockTableWindow(DefaultValues):
 
         ################ LEFT FRAME ######################
         LeftFrameLabel = Label(LeftFrame, text="Available Component Stock")
-        AddStockListbox = Listbox(LeftFrame)
+        AddStockListboxListVar = Variable(value=[])
+        AvailableStockListbox = Listbox(LeftFrame, selectmode="multiple")
         ProcutNameEntryBox = Entry(LeftFrame)
 
         LeftFrameLabel.grid(row=0, column=0, padx=5, pady=5)
-        AddStockListbox.grid(row=1, column=0, padx=5, pady=5)
+        AvailableStockListbox.grid(row=1, column=0, padx=5, pady=5)
         ProcutNameEntryBox.grid(row=2, column=0, padx=5, pady=5)
         for i in range(len(self._data_list)):
-            AddStockListbox.insert(i, self._data_list[i])
+            AvailableStockListbox.insert(i, self._data_list[i])
         ##################################################################
 
 
         ################ MIDDLE FRAME ##################
-        AddBtn = Button(MiddleFrame, text="->", command=lambda event: None)
-        RemoveBtn = Button(MiddleFrame, text="<-", command=lambda event: None)
+        AddBtn = Button(MiddleFrame, text="=>", command=lambda: MoveListItemsBtnCmd(AvailableStockListbox, AddStockListbox))
+        RemoveBtn = Button(MiddleFrame, text="<=", command=lambda: MoveListItemsBtnCmd(AddStockListbox, AvailableStockListbox))
         ComponentCountSpinBox = Spinbox(MiddleFrame, width=6)
 
         AddBtn.grid(row=0, column=0, padx=5, pady=5)
         RemoveBtn.grid(row=1, column=0, padx=5, pady=5)
         ComponentCountSpinBox.grid(row=2, column=0, padx=5, pady=5)
-        ##################################################################
 
 
         ################ RIGHT FRAME ##################
         RightFrameLabel = Label(RightFrame, text="Component Stock For Product")
-        RemoveStockListbox = Listbox(RightFrame)
-        DoneBtn = Button(RightFrame, text="Done", command=lambda: AddProductWindowObj.destroy())
+        AddStockListbox = Listbox(RightFrame, selectmode="multiple", listvariable=AddStockListboxListVar)
+        DoneBtn = Button(RightFrame, text="Done", command=lambda: DestroyWindow())
+        CancelButton = Button(RightFrame, text="cancel", command=lambda: AddProductWindowObj.destroy())
 
         RightFrameLabel.grid(row=0, column=0, padx=5, pady=5)
-        RemoveStockListbox.grid(row=1, column=0, padx=5, pady=5)
-        DoneBtn.grid(row=2, column=0, padx=5, pady=5)
+        AddStockListbox.grid(row=1, column=0, padx=5, pady=5)
+        DoneBtn.grid(row=2, column=0, padx=1, pady=1)
+        CancelButton.grid(row=3, column=0, ipadx=5, pady=5)
         ##################################################################
+
+
+
+        ##################################################################
+        # Btn function to move items between lists in "Add Product Window"
+        def MoveListItemsBtnCmd(from_list, to_list):
+            from_list_item = from_list.selection_get().split("\n")
+            from_list_item_index = from_list.curselection()
+            for i, j in zip(from_list_item_index, range(1, len(from_list_item_index) + 1)):
+                print(from_list.get(from_list.index(i)))
+                to_list.insert(j, from_list.get(from_list.index(i)))
+
+            for i in from_list_item_index[::-1]:
+                print(from_list.get(from_list.index(i)))
+                from_list.delete(i)
+
+        def DestroyWindow():
+            if AddStockListboxListVar.get() != () and ProcutNameEntryBox.get() != "":
+                AddProductWindowObj.destroy()
+            if AddStockListboxListVar.get() == () and ProcutNameEntryBox.get() == "":
+                tkinter.messagebox.showwarning(message="Components not selected and product name not Entered")
+            if AddStockListboxListVar.get() == () and ProcutNameEntryBox.get() != "":
+                tkinter.messagebox.showwarning(message="Components not selected for product")
+            if AddStockListboxListVar.get() != () and ProcutNameEntryBox.get() == "":
+                tkinter.messagebox.showwarning(message="Product Name not Entered")
 
     def RemoveProductWindow(self):
         RemoveProductWindow = Toplevel()
