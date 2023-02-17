@@ -471,7 +471,7 @@ class ShowProductStockTableWindow(DefaultValues):
         Title = Label(BottomFrame, text="Remove Product")
         Title.grid(row=0, column=0, padx=5, pady=5)
 
-        ProductTable = tksheet.Sheet(BottomFrame, headers=["Product Name"])
+        ProductTable = tksheet.Sheet(BottomFrame, headers=["Product Name"], data=self.ProductStockData(), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
         BtnsFrame = Frame(BottomFrame)
         ProductTable.grid(row=0, column=0, padx=5, pady=5)
         BtnsFrame.grid(row=0, column=1, padx=5, pady=5)
