@@ -345,7 +345,7 @@ class ShowProductStockTableWindow(DefaultValues):
             return
 
         scl = list(scl)
-        scl[1] = 0
+        scl[1] = 0  # used to select 1st column of arbitrarily selected cell
 
         selected_product = self.ProductTable.get_cell_data(r=scl[0], c=scl[1])
         selected_product_info = self.db_ops.FetchComponentsPerProduct(selected_product)
