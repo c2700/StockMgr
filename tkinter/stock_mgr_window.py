@@ -351,8 +351,8 @@ class ShowProductStockTableWindow(DefaultValues):
         for i in selected_product_info:
             component_list += f"{i}: {selected_product_info[i]}\n"
 
-        WindowTitle = Label(ProductInfoWindow, text=f"About {selected_product}")
-        ProductName = Label(ProductInfoWindow, text=f"About: {selected_product}")
+        WindowTitle = Label(ProductInfoWindow, text=f"About Product")
+        ProductName = Label(ProductInfoWindow, text=f"Name: {selected_product}")
         ComponentList = Label(ProductInfoWindow, text=component_list)
 
 
