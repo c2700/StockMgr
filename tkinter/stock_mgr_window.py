@@ -337,7 +337,7 @@ class ShowProductStockTableWindow(DefaultValues):
 
     def ProductInfoPopup(self):
 
-        # stcl - selected_cell_location
+        # scl - selected_cell_location
         scl = self.ProductTable.get_currently_selected()
 
         if scl == ():
