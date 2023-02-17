@@ -315,9 +315,11 @@ class ShowProductStockTableWindow(DefaultValues):
         self.AddBtn = Button(self.ButtonFrame, text="Add-Product", command=lambda: self.AddProductWindow())
         self.RemBtn = Button(self.ButtonFrame, text="Remove-Product", command=lambda: self.RemoveProductWindow())
         self.ProductInfoBtn = Button(self.ButtonFrame, text="About-Product", command=lambda: self.ProductInfoPopup())
+        self.DoneBtn = Button(self.ButtonFrame, text="Done", command=lambda: self.ProductStockTableWindow.destroy())
         self.AddBtn.grid(column=0, row=0)
         self.RemBtn.grid(column=1, row=0)
         self.ProductInfoBtn.grid(column=2, row=0)
+        self.DoneBtn.grid(column=3, row=0)
 
     def ProductStockData(self):
         try:
