@@ -105,7 +105,18 @@ class DBops:
         # print(query)
         self.db_cursor.execute(query)
         self.fetched_db_data_list = self.db_cursor.fetchall()
-        return self.fetched_db_data_list
+
+        if self.fetched_db_data_list == []:
+            return 2
+
+        if self.fetched_db_data_list != []:
+            if getstockstate is True:
+                if self.fetched_db_data_list[0][2] > 0:
+                    return self.fetched_db_data_list, "in-stock"
+                if self.fetched_db_data_list[0][2] == 0:
+                    return self.fetched_db_data_list, "out-of-stock"
+            elif getstockstate is False:
+                return self.fetched_db_data_list
 
     def FetchAllComponents(self, **kwargs):
         columns = []

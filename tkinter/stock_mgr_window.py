@@ -1,3 +1,4 @@
+import re
 import tkinter.messagebox
 from tkinter.ttk import *
 
@@ -68,7 +69,7 @@ class StockManager(DefaultValues):
         self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_cursor=self.db_cursor))
         self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_cursor=self.db_cursor))
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry")
-        self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search", command=lambda: self.SearchWindow())
+        self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search Component", command=lambda: self.SearchWindow())
 
         # arranging ui elements
         self.AddRemComponentBtn.grid(row=0, column=0, padx=5, pady=5)
@@ -107,11 +108,37 @@ class StockManager(DefaultValues):
         self.MainWindow.destroy()
 
     def SearchWindow(self):
-        SearchPopupWindow = Toplevel()
-        SearchPopupWindow.title = "Search Result"
-        SearchPopupWindow.minsize(height=100, width=200)
-        SearchString = Label(SearchPopupWindow, text="Found Component")
-        SearchString.grid(row=0, column=0, pady=10, padx=10)
+        if self.SearchComponentEntry.get() == "":
+            tkinter.messagebox.showinfo(title="INFO", message="Please Enter a component name")
+        elif self.SearchComponentEntry.get() != "":
+            SearchPopupWindow = Toplevel()
+            SearchPopupWindow.title = "Search Result"
+            SearchPopupWindow.minsize(height=100, width=200)
+            SearchComponentEntryValue = self.SearchComponentEntry.get()
+
+            name = None
+            code = None
+            count = None
+            result = None
+
+            if re.search('^[0-9]*$', SearchComponentEntryValue):
+                result = self.db_ops.FetchComponent(getcount=True, getstockstate=True, component_code=SearchComponentEntryValue)
+            if re.search('[a-zA-Z]+[0-9]+', SearchComponentEntryValue):
+                result = self.db_ops.FetchComponent(getcount=True, getstockstate=True, component_name=SearchComponentEntryValue)
+
+            if result == 2:
+                tkinter.messagebox.showwarning(message=f"Component does not exist")
+                return
+
+            name = result[0][0][0]
+            code = result[0][0][1]
+            count = result[0][0][2]
+            stock_state = result[1]
+
+            ComponentInfoLabel = f"Component Name: {name}\nComponent Count: {count}\nStock State: {stock_state}"
+            # tkinter.messagebox.showinfo(message=ComponentInfoLabel)
+            SearchString = Label(SearchPopupWindow, text=ComponentInfoLabel)
+            SearchString.grid(row=0, column=0, pady=10, padx=10)
 
 
 class AddRemoveComponentWindow(AddRemoveWindow):
@@ -355,8 +382,11 @@ class ShowProductStockTableWindow(DefaultValues):
 
 
         ################ MIDDLE FRAME ##################
-        AddBtn = Button(MiddleFrame, text="=>", command=lambda: MoveListItemsBtnCmd(AvailableStockListbox, AddStockListbox))
-        RemoveBtn = Button(MiddleFrame, text="<=", command=lambda: MoveListItemsBtnCmd(AddStockListbox, AvailableStockListbox))
+
+        AddBtnIndexTuple = (Variable())
+        RemBtnIndexTuple = (Variable())
+        AddBtn = Button(MiddleFrame, text="->", command=lambda: MoveListItemsBtnCmd(AvailableStockListbox, AddStockListbox), textvariable=AddBtnIndexTuple)
+        RemoveBtn = Button(MiddleFrame, text="<-", command=lambda: MoveListItemsBtnCmd(AddStockListbox, AvailableStockListbox), textvariable=RemBtnIndexTuple)
         ComponentCountSpinBox = Spinbox(MiddleFrame, width=6)
 
         AddBtn.grid(row=0, column=0, padx=5, pady=5)
@@ -387,9 +417,13 @@ class ShowProductStockTableWindow(DefaultValues):
                 print(from_list.get(from_list.index(i)))
                 to_list.insert(j, from_list.get(from_list.index(i)))
 
-            for i in from_list_item_index[::-1]:
+            from_list_item_index_rev = from_list_item_index[::-1]
+
+            for i in from_list_item_index_rev:
                 print(from_list.get(from_list.index(i)))
                 from_list.delete(i)
+
+            return from_list_item_index_rev
 
         def DestroyWindow():
             if AddStockListboxListVar.get() != () and ProcutNameEntryBox.get() != "":
