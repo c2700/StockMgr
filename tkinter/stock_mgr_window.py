@@ -146,6 +146,7 @@ class AddRemoveComponentWindow(AddRemoveWindow):
         super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_cursor=db_cursor, table_name="ComponentStock")
 
 
+
 class AddRemoveProductWindow(AddRemoveWindow):
     def __init__(self, db_cursor):
         super(AddRemoveProductWindow, self).__init__(title_text="Product", db_cursor=db_cursor, table_name="ProductStock")
@@ -189,6 +190,9 @@ class ShowComponentStockTableWindow(DefaultValues):
         self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_conn_obj))
         self.ChangeStockStateBtn.grid(row=0, column=1, padx=10)
 
+        self.RefreshInfoBtn = Button(self.Button_Frame, text="Refresh Info", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_conn_obj))
+        self.ChangeStockStateBtn.grid(row=0, column=2, padx=10)
+
         self.ComponentStockTabbedPaneFrame = Frame(self.BottomFrame)
         self.ComponentStockTabbedPaneFrame.grid(column=0, row=0)
 
@@ -196,12 +200,12 @@ class ShowComponentStockTableWindow(DefaultValues):
         self.ComponentStockTabbedPane.grid(row=1, column=0)
         available_component_list, defective_component_list, rejected_component_list, lost_component_list, out_of_stock_component_list = self.ComponentWindowTableData(db_cursor=self.db_conn_obj)
 
-
         self.AvailableTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=available_component_list, align="center")
         self.DefectiveTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=defective_component_list, align="center")
         self.RejectedTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=rejected_component_list, align="center")
         self.LostTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=lost_component_list, align="center")
         self.OutOfStockTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name"], data=out_of_stock_component_list, align="center")
+
 
         for object in [self.DefectiveTab, self.RejectedTab, self.LostTab, self.OutOfStockTab, self.AvailableTab]:
             object.set_options(expand_sheet_if_paste_too_big=True,
@@ -333,16 +337,29 @@ class ShowProductStockTableWindow(DefaultValues):
 
     def ProductInfoPopup(self):
 
+        # stcl - selected_cell_location
+        scl = list(self.ProductTable.get_currently_selected())
+        scl[1] = 0
+
+        selected_product = self.ProductTable.get_cell_data(r=scl[0], c=scl[1])
+        selected_product_info = self.db_ops.FetchComponentsPerProduct(selected_product)
+        component_list = "component: component_count\n"
+
         ProductInfoWindow = Toplevel()
         ProductInfoWindow.title = "Product Info"
 
-        WindowTitle = Label(ProductInfoWindow, text="About Product")
-        ProductName = Label(ProductInfoWindow, text="Name: Name")
-        ComponentList = Label(ProductInfoWindow, text="component_list: List - count")
+        for i in selected_product_info:
+            component_list += f"{i}: {selected_product_info[i]}\n"
+
+        WindowTitle = Label(ProductInfoWindow, text=f"About {selected_product}")
+        ProductName = Label(ProductInfoWindow, text=f"About: {selected_product}")
+        ComponentList = Label(ProductInfoWindow, text=component_list)
+
 
         WindowTitle.grid(row=0, column=0, pady=5, padx=5)
         ProductName.grid(row=1, column=0, pady=5, padx=5)
         ComponentList.grid(row=2, column=0, pady=5, padx=5)
+
 
     def AddProductWindow(self):
         try:
