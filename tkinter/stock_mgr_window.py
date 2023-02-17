@@ -338,7 +338,13 @@ class ShowProductStockTableWindow(DefaultValues):
     def ProductInfoPopup(self):
 
         # stcl - selected_cell_location
-        scl = list(self.ProductTable.get_currently_selected())
+        scl = self.ProductTable.get_currently_selected()
+
+        if scl == ():
+            tkinter.messagebox.showwarning(message="Please select a product from the table")
+            return
+
+        scl = list(scl)
         scl[1] = 0
 
         selected_product = self.ProductTable.get_cell_data(r=scl[0], c=scl[1])
