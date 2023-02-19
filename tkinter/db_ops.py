@@ -10,6 +10,12 @@ class DBops:
 
     ### Fetch operations=s
     def FetchProduct(self, product_name, getcount=False, getstockstate=False):
+        '''
+        :param product_name: name of product to fetch
+        :param getcount: get count column
+        :param getstockstate: get stock state
+        :return:
+        '''
         query = f"SELECT Name FROM ProductStock WHERE Name = {product_name}"
         if (getcount is True) and (getstockstate is False):
             query = f"SELECT Name,Count FROM ProductStock WHERE Name = {product_name}"
@@ -21,6 +27,11 @@ class DBops:
 
 
     def FetchAllProducts(self, getcount=False, getstockstate=False):
+        '''
+        :param getcount: get count column
+        :param getstockstate: get stock state
+        :return:
+        '''
         query = "SELECT "
         if (getcount is False) and (getstockstate is False):
             query += "Name"
@@ -36,6 +47,11 @@ class DBops:
 
 
     def FetchComponentsPerProduct(self, ProductName):
+        '''
+        fetch info of all required components required for said product from DB
+        :param ProductName: name of product to fetch
+        :return:
+        '''
         # SET @var=(SELECT `Product Code` FROM ComponentsPerProduct WHERE `Product Code` = 653);
         # self.db_cursor.execute("SELECT Name FROM ")
         _component_list = []
@@ -82,6 +98,12 @@ class DBops:
 
 
     def FetchComponent(self, getcount=False, getstockstate=False, **kwargs):
+        '''
+        :param getcount: fetch count column of specified component table
+        :param getstockstate: show stock-state of specified component
+        :param kwargs: specify, 'component code' and/or 'component name' to fetch
+        :return:
+        '''
         kwargs_dict = {"component_code": "Code", "component_name": "Name"}
         query = "SELECT "
         if (getcount is False) and (getstockstate is False):
@@ -116,18 +138,19 @@ class DBops:
             elif getstockstate is False:
                 return self.fetched_db_data_list
 
+
     def FetchAllComponents(self, **kwargs):
-        columns = []
         '''
-        getcount=False, getstockstate=False, getstockcount=False
+        Fetch all Names of all components from ComponentStock Table
+        :param kwargs:{
+            Bool "Code": Fetch Component Code
+            Bool "Count": Fetch Component Count
+        }
+        :return:
         '''
-        if len(kwargs) >= 1 or len(kwargs) < 3 and any(i is False for i in kwargs):
-            for i in kwargs:
-                if kwargs[i] is True:
-                    columns += [f"{i}"]
-            columns = str.join(",", columns)
-        elif not any(i is False for i in kwargs) and len(kwargs) == 3:
-            columns = "*"
+
+        columns = ["Name"] + [i for i in kwargs if kwargs[i] is not True]
+        columns = str.join(",", columns)
         query = f"SELECT {columns} FROM ComponentStock"
         self.db_cursor.execute(query)
         self.fetched_db_data_list = self.db_cursor.fetchall()
@@ -137,6 +160,12 @@ class DBops:
 
     ### db manip operations
     def AddColumn(self, table_name, column_name, **col_constraints):
+        '''
+        :param table_name: table name to add the column to
+        :param column_name: column name to be added
+        :param col_constraints: column properties/constraints
+        :return:
+        '''
         _check_col_query = f"IF NOT EXISTS((SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME='{column_name}' AND TABLE_NAME='{table_name}')) THEN "
         _add_col_query = f"ALTER TABLE {table_name} ADD {column_name} {col_constraints}"
         _query = f"{_add_col_query} {_check_col_query}"
@@ -145,6 +174,12 @@ class DBops:
         return self.fetched_db_data_list
 
     def RemoveColumn(self, table_name, column_name, condtion_data_dict):
+        '''
+        :param table_name: table name to remove column from
+        :param column_name: column to remove
+        :param condtion_data_dict: constraints/conditions/values to check for
+        :return:
+        '''
         query = f"DELETE {column_name} FROM {table_name}"
         if condtion_data_dict is not {}:
             _condtion_data_dict = str.join(" AND ", [f"{i} = {condtion_data_dict[i]}" for i in condtion_data_dict])
@@ -155,7 +190,6 @@ class DBops:
 
     def AddRow(self, table_name, row_data):
         '''
-
         :param table_name: table to insert values to
         :param row_data: dictionary. {"column name": "row_value to insert"}
         :return:
@@ -173,21 +207,32 @@ class DBops:
         :param row_data: dictionary. {"column name": "row_value to insert"}
         :return:
         '''
+
         _cond_query = str.join(' AND ', [f'{i} = {row_data[i]}' for i in row_data])
         query = f"DELETE FROM {table_name} WHERE {_cond_query}"
         self.db_cursor.execute(query)
         # self.fetched_db_data_list = self.db_cursor.fetchall()
         # return self.fetched_db_data_list
 
-    def UpdateValue(self, table_name, old_data, new_data):
+
+    def UpdateValue(self, table_name, curent_data, new_data):
+        '''
+        :param table_name: Table name to update value in
+        :param curent_data: current value
+        :param new_data: value to replace current value
+        :return:
+        '''
 
         _new_data = str.join(",", [f"{i} = {new_data[i]}" for i in new_data])
-        _old_data = str.join(" AND ", [f"{i} = {old_data[i]}" for i in old_data])
+        _old_data = str.join(" AND ", [f"{i} = {curent_data[i]}" for i in curent_data])
 
         query = f"UPDATE {table_name} SET {_new_data} WHERE {_old_data}"
         self.db_cursor.execute(query)
         # self.fetched_db_data_list = self.db_cursor.fetchall()
         # return self.fetched_db_data_list
+
+
+
 
     def AddComponent(self, component_name, component_code, component_count):
         self.AddRow(table_name="ComponentStock", row_data={"Name": component_name,
@@ -200,12 +245,24 @@ class DBops:
                                                                      "Lost Count": 0,
                                                                      "Defective Count": 0})
 
+    def RemoveComponent(self, **kwargs):
+        _kwargs = {
+            "component_name": "Code",
+            "component_code": "Name"
+        }
+
+        _row_data = {}
+
+        for i in kwargs:
+            _row_data.update({i: _kwargs[i]})
+
+        self.RemoveRow(table_name="ComponentStock", row_data=_row_data)
+        self.RemoveRow(table_name="ComponentStockStateCount", row_data=_row_data)
+
+
     def AddProduct(self):
         pass
 
     def RemoveProduct(self):
-        pass
-
-    def RemoveComponent(self):
         pass
 
