@@ -85,10 +85,8 @@ class DBops:
         kwargs_dict = {"component_code": "Code", "component_name": "Name"}
         query = "SELECT "
         if (getcount is False) and (getstockstate is False):
-            query += f"Name "
-        if (getcount is True) and (getstockstate is False):
-            query += f"Name,Count "
-        if (getcount is True) and (getstockstate is True):
+            query += f"Name,Code "
+        if (getcount is True) or (getstockstate is True):
             query += f"* "
         query += "FROM ComponentStock WHERE "
 
@@ -102,7 +100,7 @@ class DBops:
             elif arg != "component_name":
                 _ += [f"{_col_name} = {_col_val}"]
         query += str.join(" AND ", _)
-        # print(query)
+        print(query)
         self.db_cursor.execute(query)
         self.fetched_db_data_list = self.db_cursor.fetchall()
 
@@ -138,60 +136,76 @@ class DBops:
 
 
     ### db manip operations
-    def AddColumn(self, table_name, column_name, **kwargs):
-        query = f"ALTER TABLE {table_name} ADD {column_name} TEXT"
+    def AddColumn(self, table_name, column_name, **col_constraints):
+        _check_col_query = f"IF NOT EXISTS((SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME='{column_name}' AND TABLE_NAME='{table_name}')) THEN "
+        _add_col_query = f"ALTER TABLE {table_name} ADD {column_name} {col_constraints}"
+        _query = f"{_add_col_query} {_check_col_query}"
+        self.db_cursor.execute(_query)
+        self.fetched_db_data_list = self.db_cursor.fetchall()
+        return self.fetched_db_data_list
+
+    def RemoveColumn(self, table_name, column_name, condtion_data_dict):
+        query = f"DELETE {column_name} FROM {table_name}"
+        if condtion_data_dict is not {}:
+            _condtion_data_dict = str.join(" AND ", [f"{i} = {condtion_data_dict[i]}" for i in condtion_data_dict])
+            query += f"WHERE {_condtion_data_dict}"
         self.db_cursor.execute(query)
         self.fetched_db_data_list = self.db_cursor.fetchall()
         return self.fetched_db_data_list
 
-    def RemoveColumn(self, table_name, column_name, **kwargs):
-        if ("count" in kwargs) and (int(str(kwargs["count"])) == 0 or str(kwargs["count"]) == ""):
-            pass
-        query = ""
+    def AddRow(self, table_name, row_data):
+        '''
+
+        :param table_name: table to insert values to
+        :param row_data: dictionary. {"column name": "row_value to insert"}
+        :return:
+        '''
+        _cols = str.join(',', [i for i in row_data])
+        _values = str.join(',', [f"{(row_data[i])}" for i in row_data])
+        query = f"INSERT INTO TABLE {table_name}({_cols}) VALUES {_values}"
         self.db_cursor.execute(query)
-        self.fetched_db_data_list = self.db_cursor.fetchall()
-        return self.fetched_db_data_list
+        # self.fetched_db_data_list = self.db_cursor.fetchall()
+        # return self.fetched_db_data_list
 
-    def AddRow(self, table_name, Name, **kwargs):
-        Name = f"'{str(Name)}'"
-        stock_state = "1"
-        NameCount = "0"
-
-        if ("NameCount" in kwargs) and (int(str(kwargs["NameCount"])) == 0 or str(kwargs["NameCount"]) == ""):
-            NameCount = str(kwargs["NameCount"])
-            stock_state = "0"
-
-        query = f"INSERT INTO TABLE {table_name} VALUES({Name}, {NameCount}, {stock_state})"
+    def RemoveRow(self, table_name, row_data):
+        '''
+        :param table_name: table to remove values from
+        :param row_data: dictionary. {"column name": "row_value to insert"}
+        :return:
+        '''
+        _cond_query = str.join(' AND ', [f'{i} = {row_data[i]}' for i in row_data])
+        query = f"DELETE FROM {table_name} WHERE {_cond_query}"
         self.db_cursor.execute(query)
-        self.fetched_db_data_list = self.db_cursor.fetchall()
-        return self.fetched_db_data_list
+        # self.fetched_db_data_list = self.db_cursor.fetchall()
+        # return self.fetched_db_data_list
 
-    def RemoveRow(self, table_name, Name):
-        query = f"DELETE FROM {table_name} WHERE Name = {Name}"
+    def UpdateValue(self, table_name, old_data, new_data):
+
+        _new_data = str.join(",", [f"{i} = {new_data[i]}" for i in new_data])
+        _old_data = str.join(" AND ", [f"{i} = {old_data[i]}" for i in old_data])
+
+        query = f"UPDATE {table_name} SET {_new_data} WHERE {_old_data}"
         self.db_cursor.execute(query)
-        self.fetched_db_data_list = self.db_cursor.fetchall()
-        return self.fetched_db_data_list
+        # self.fetched_db_data_list = self.db_cursor.fetchall()
+        # return self.fetched_db_data_list
 
-    def UpdateValue(self, table_name, **kwargs):
-        query = f"UPDATE {table_name} SET "
+    def AddComponent(self, component_name, component_code, component_count):
+        self.AddRow(table_name="ComponentStock", row_data={"Name": component_name,
+                                                           "Code": component_code,
+                                                           "Count": component_count})
 
-        if ["CurrentName", "NewName"] in kwargs and "NewNameCount" not in kwargs:
-            CurrentName = kwargs["CurrentName"]
-            NewName = kwargs["NewName"]
-            query += f"Name = {NewName} WHERE Name = {CurrentName}"
+        self.AddRow(table_name="ComponentStockStateCount", row_data={"Component Code": component_code,
+                                                                     "in-stock Count": component_count,
+                                                                     "Rejected Count": 0,
+                                                                     "Lost Count": 0,
+                                                                     "Defective Count": 0})
 
-        if ["CurrentName", "NewName", "NewNameCount"] in kwargs:
-            CurrentName = kwargs["CurrentName"]
-            NewName = kwargs["NewName"]
-            NewNameCount = kwargs["NewNameCount"]
-            query += f"Name = {CurrentName}, NameCount = {NewNameCount} WHERE Name = {NewName}"
+    def AddProduct(self):
+        pass
 
-        if ["CurrentName", "NewName", "NewNameCount"] in kwargs and "NewNameCount" not in kwargs:
-            CurrentName = kwargs["CurrentName"]
-            CurrentNameCount = kwargs["NewNameCount"]
-            NewName = kwargs["NewName"]
-            NewNameCount = kwargs["NewNameCount"]
-            query += f"Name = {CurrentName}, NameCount = {NewNameCount} WHERE Name = {NewName} AND NameCount = {CurrentNameCount}"
-        self.db_cursor.execute(query)
-        self.fetched_db_data_list = self.db_cursor.fetchall()
-        return self.fetched_db_data_list
+    def RemoveProduct(self):
+        pass
+
+    def RemoveComponent(self):
+        pass
+

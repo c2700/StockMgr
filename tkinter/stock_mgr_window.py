@@ -116,27 +116,22 @@ class StockManager(DefaultValues):
             SearchPopupWindow.minsize(height=100, width=200)
             SearchComponentEntryValue = self.SearchComponentEntry.get()
 
-            name = None
-            code = None
-            count = None
             result = None
 
-            if re.search('^[0-9]*$', SearchComponentEntryValue):
+            if re.search('^\d+$', SearchComponentEntryValue):
                 result = self.db_ops.FetchComponent(getcount=True, getstockstate=True, component_code=SearchComponentEntryValue)
-            if re.search('[a-zA-Z]+[0-9]+', SearchComponentEntryValue):
+            if re.search('([0-9]+)?[a-zA-Z]+([0-9]+)?', SearchComponentEntryValue):
                 result = self.db_ops.FetchComponent(getcount=True, getstockstate=True, component_name=SearchComponentEntryValue)
-
             if result == 2:
                 tkinter.messagebox.showwarning(message=f"Component does not exist")
                 return
 
+            stock_state = result[1]
+            count = result[0][0][2]
             name = result[0][0][0]
             code = result[0][0][1]
-            count = result[0][0][2]
-            stock_state = result[1]
 
-            ComponentInfoLabel = f"Component Name: {name}\nComponent Count: {count}\nStock State: {stock_state}"
-            # tkinter.messagebox.showinfo(message=ComponentInfoLabel)
+            ComponentInfoLabel = f"Component Name: {name}\nComponent Code: {code}\nComponent Count: {count}\nStock State: {stock_state}"
             SearchString = Label(SearchPopupWindow, text=ComponentInfoLabel)
             SearchString.grid(row=0, column=0, pady=10, padx=10)
 
@@ -410,8 +405,8 @@ class ShowProductStockTableWindow(DefaultValues):
 
         AddBtnIndexTuple = (Variable())
         RemBtnIndexTuple = (Variable())
-        AddBtn = Button(MiddleFrame, text="->", command=lambda: MoveListItemsBtnCmd(AvailableStockListbox, AddStockListbox), textvariable=AddBtnIndexTuple)
-        RemoveBtn = Button(MiddleFrame, text="<-", command=lambda: MoveListItemsBtnCmd(AddStockListbox, AvailableStockListbox), textvariable=RemBtnIndexTuple)
+        AddBtn = Button(MiddleFrame, text="->", command=lambda: MoveListItemsBtnCmd(AvailableStockListbox, AddStockListbox), textvariable=RemBtnIndexTuple)
+        RemoveBtn = Button(MiddleFrame, text="<-", command=lambda: MoveListItemsBtnCmd(AddStockListbox, AvailableStockListbox), textvariable=AddBtnIndexTuple)
         ComponentCountSpinBox = Spinbox(MiddleFrame, width=6)
 
         AddBtn.grid(row=0, column=0, padx=5, pady=5)
@@ -422,13 +417,16 @@ class ShowProductStockTableWindow(DefaultValues):
         ################ RIGHT FRAME ##################
         RightFrameLabel = Label(RightFrame, text="Component Stock For Product")
         AddStockListbox = Listbox(RightFrame, selectmode="multiple", listvariable=AddStockListboxListVar)
-        DoneBtn = Button(RightFrame, text="Done", command=lambda: DestroyWindow())
-        CancelButton = Button(RightFrame, text="cancel", command=lambda: AddProductWindowObj.destroy())
+        RightFrame_BtnFrame = Frame(RightFrame)
+        AddButton = Button(RightFrame_BtnFrame, text="Add", command=lambda: AddProduct())
+        DoneBtn = Button(RightFrame_BtnFrame, text="Done", command=lambda: AddProductWindowObj.destroy())
 
         RightFrameLabel.grid(row=0, column=0, padx=5, pady=5)
         AddStockListbox.grid(row=1, column=0, padx=5, pady=5)
-        DoneBtn.grid(row=2, column=0, padx=1, pady=1)
-        CancelButton.grid(row=3, column=0, ipadx=5, pady=5)
+        RightFrame_BtnFrame.grid(row=2, column=0, padx=1, pady=1)
+
+        AddButton.grid(row=0, column=0, padx=5, pady=5)
+        DoneBtn.grid(row=0, column=1, padx=5, pady=5)
         ##################################################################
 
 
@@ -436,29 +434,50 @@ class ShowProductStockTableWindow(DefaultValues):
         ##################################################################
         # Btn function to move items between lists in "Add Product Window"
         def MoveListItemsBtnCmd(from_list, to_list):
+            if ComponentCountSpinBox.get() == 0 or ComponentCountSpinBox.get() == "":
+                tkinter.messagebox.showwarning(message="Please enter a number greater than 0")
+                return
             from_list_item = from_list.selection_get().split("\n")
             from_list_item_index = from_list.curselection()
             for i, j in zip(from_list_item_index, range(1, len(from_list_item_index) + 1)):
-                print(from_list.get(from_list.index(i)))
                 to_list.insert(j, from_list.get(from_list.index(i)))
+                # print(from_list.get(from_list.index(i)))
 
             from_list_item_index_rev = from_list_item_index[::-1]
 
             for i in from_list_item_index_rev:
-                print(from_list.get(from_list.index(i)))
                 from_list.delete(i)
+                # print(from_list.get(from_list.index(i)))
 
             return from_list_item_index_rev
 
-        def DestroyWindow():
-            if AddStockListboxListVar.get() != () and ProcutNameEntryBox.get() != "":
-                AddProductWindowObj.destroy()
-            if AddStockListboxListVar.get() == () and ProcutNameEntryBox.get() == "":
+        def AddProduct():
+            AddStockListboxComponentList = AddStockListboxListVar.get()
+            ProcutName = ProcutNameEntryBox.get()
+
+            if (AddStockListboxComponentList == () or AddStockListboxComponentList == "") and ProcutName == "":
                 tkinter.messagebox.showwarning(message="Components not selected and product name not Entered")
-            if AddStockListboxListVar.get() == () and ProcutNameEntryBox.get() != "":
+                return
+            if (AddStockListboxComponentList == () or AddStockListboxComponentList == "") and ProcutName != "":
                 tkinter.messagebox.showwarning(message="Components not selected for product")
-            if AddStockListboxListVar.get() != () and ProcutNameEntryBox.get() == "":
+                return
+            if (AddStockListboxComponentList != () or AddStockListboxComponentList != "") and ProcutName == "":
                 tkinter.messagebox.showwarning(message="Product Name not Entered")
+                return
+            if (AddStockListboxComponentList != () or AddStockListboxComponentList != "") and ProcutName != "":
+                print(AddStockListboxComponentList)  # tuple
+                print(ProcutName)  # string
+            _ComponentCount = ComponentCountSpinBox.get()
+            _components_dict = {}
+            for i in AddStockListboxComponentList:
+                _ = self.db_ops.FetchComponent(component_name=i)
+                _name = _[0][0]
+                _code = f"_{_[0][1]}"
+                _components_dict.update({ _code: _ComponentCount})
+
+            self.db_ops.AddColumn()
+
+
 
     def RemoveProductWindow(self):
         RemoveProductWindow = Toplevel()
