@@ -159,19 +159,63 @@ class DBops:
 
 
     ### db manip operations
-    def AddColumn(self, table_name, column_name, **col_constraints):
+    def AddColumn(self, table_name, column_name, col_data_props, foreign_key_constraints, foreign_key=False, index=False):
         '''
+
         :param table_name: table name to add the column to
         :param column_name: column name to be added
-        :param col_constraints: column properties/constraints
+        :param foreign_key_constraints: {
+                                        "reference_table": string,
+                                        "reference_column": string
+                                        }
+
+        :param col_data_props: column data entry properties/constraints
+                                {
+                                no_null: bool,
+                                data_type: string,
+                                }
+
+        :param index_constraints: => set index constraints
+                {
+                index_name: string (column_name_idx),
+                index_mode: ASC
+                index_reference_col: foreign_key_constraints["reference_table"]
+                }
+
         :return:
         '''
-        _check_col_query = f"IF NOT EXISTS((SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME='{column_name}' AND TABLE_NAME='{table_name}')) THEN "
-        _add_col_query = f"ALTER TABLE {table_name} ADD {column_name} {col_constraints}"
-        _query = f"{_add_col_query} {_check_col_query}"
-        self.db_cursor.execute(_query)
-        self.fetched_db_data_list = self.db_cursor.fetchall()
-        return self.fetched_db_data_list
+
+        # _check_col_query = f"IF NOT EXISTS((SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME='{column_name}' AND TABLE_NAME='{table_name}')) THEN "
+        # _add_col_query = f"ALTER TABLE {table_name} ADD {column_name} {col_constraints}"
+        # _query = f"{_check_col_query} {_add_col_query}"
+        _check_add_col_query = f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS `{column_name}`"
+
+        col_data_props["data_type"] = str.upper(col_data_props["data_type"])
+        if col_data_props["no_null"] is True:
+            _check_add_col_query = f"{_check_add_col_query} NOT NULL"
+
+        _query = ""
+        if foreign_key == False:
+            _query = f"{_check_add_col_query}"
+        elif foreign_key == True:
+            _reference_table = foreign_key_constraints["reference_table"]
+            _reference_column = foreign_key_constraints["reference_column"]
+            _foreign_key_query = f"CONSTRAINT `{column_name}` FOREIGN KEY (`{column_name}`) REFERENCES {_reference_table}(`{_reference_column}`) ON DELETE CASCADE ON UPDATE CASCADE"
+            # CONSTRAINT `Component Code` FOREIGN KEY (`Component Code`) REFERENCES ComponentStock(`Code`) ON DELETE CASCADE ON UPDATE CASCADE
+            _query = f"{_check_add_col_query} {_foreign_key_query}"
+
+            if index == True:
+                _index_name = f"{_reference_column}"
+                _index_mode = "ASC"
+                _index_reference = f"{_reference_table}"
+                _index_query = f"INDEX ({_index_reference} {_index_mode}) VISIBLE"
+                # INDEX `Product Code_idx` (`Product Code` ASC) VISIBLE
+                _query += f", {_index_query}"
+
+        print(_query)
+        # self.db_cursor.execute(_query)
+        # self.fetched_db_data_list = self.db_cursor.fetchall()
+        # return self.fetched_db_data_list
 
     def RemoveColumn(self, table_name, column_name, condtion_data_dict):
         '''
