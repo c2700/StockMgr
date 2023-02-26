@@ -1,8 +1,6 @@
 import re
 import tkinter.messagebox
 from tkinter.ttk import *
-
-import mariadb
 import tksheet
 from tkinter import *
 from mariadb import connect
@@ -22,14 +20,12 @@ class StockManager(DefaultValues):
                 self.db_conn_obj = connect(user='blank',
                                            host="localhost",
                                            database="StockDB",
-                                           unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/mysqld.sock")
+                                           unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/db_server.sock")
             if system() == "Windows":
                 self.db_conn_obj = connect(user='blank',
                                   host="localhost",
                                   database="StockDB",
                                   port=3306)
-
-
 
             self.db_cursor = self.db_conn_obj.cursor()
             print("FUCK YEA!!!!!!")
@@ -39,7 +35,7 @@ class StockManager(DefaultValues):
         #     print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
         except mariadb.Error as e:
             print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
-            exit(1)
+            # exit(1)
 
         self.MainWindow.title("Stock Manager")
         self.MainWindow.geometry("1200x700")

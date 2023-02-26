@@ -2,6 +2,20 @@ import tkinter
 from tkinter import Frame, Button, Entry, Toplevel, Label, Spinbox
 from tkinter.ttk import Combobox
 from db_ops import *
+import random
+
+
+def RandomCharGenerator(char_len):
+    chr_list=[chr(i) for i in range(48, 58)]
+    chr_list+=[chr(i) for i in range(65, 91)]
+
+    random_val = ""
+
+    rand = random.Random()
+    for i in range(0, char_len):
+        random_val += rand.choice(chr_list)
+    return random_val
+
 
 class ChangeStockStateWindow:
     def __init__(self, stock_type_text, db_conn_obj, table_name):
@@ -98,7 +112,7 @@ class AddRemoveWindow:
         self.add_btn.grid(row=0, column=0, padx=2, pady=2)
         self.rem_btn.grid(row=0, column=1, padx=2, pady=2)
 
-class DefaultValues():
+class DefaultValues:
     def __init__(self):
         self.stock_state_dict = {
             0: "in-stock",
@@ -109,3 +123,4 @@ class DefaultValues():
             5: "rejected",
             6: "ordered"
         }
+
