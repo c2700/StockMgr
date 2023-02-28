@@ -24,10 +24,12 @@ class DBops:
         :return:
         '''
 
-        if 'Name' in kwargs:
-            kwargs['Name'] = f"'{kwargs['Name']}'"
+        query = ""
+        if "Name" in kwargs:
+            kwargs['Name'] = f"{kwargs['Name']}"
 
-        _conditional_query = [f"{i} = {kwargs[i]}" for i in kwargs]
+        _conditional_query = kwargs["conditional_query"]
+        _conditional_query = [f"{i} = {_conditional_query[i]}" for i in _conditional_query]
         _conditional_query = str.join(" AND ", _conditional_query)
 
         if select_cols is not None:
@@ -35,13 +37,14 @@ class DBops:
             _select_cols = str.join(",", _select_cols)
 
             query = f"SELECT {_select_cols} FROM ProductStock WHERE {_conditional_query}"
-        elif select_cols is None:
+        else:
             query = f"SELECT Name FROM ProductStock WHERE {_conditional_query}"
 
-        # print(query)
+        print(query)
         self.db_cursor.execute(query)
-        return self.db_cursor.fetchall()
-
+        _ret = self.db_cursor.fetchall()[0]
+        print(_ret)
+        return _ret
 
 
 
@@ -121,6 +124,16 @@ class DBops:
                     return self.fetched_db_data_list, "out-of-stock"
             elif getstockstate is False:
                 return self.fetched_db_data_list
+
+    def FetchComponentAllStocks(self, Code):
+        query = f"SELECT `in-stock Count`,`Rejected Count`,`Lost Count`,`Defective Count` FROM ComponentStockStateCount WHERE `Code` = {Code}"
+        self.db_cursor.execute(query)
+        stock_state_list = self.db_cursor.fetchall()[0]
+        InStock = stock_state_list[0]
+        Rejected = stock_state_list[1]
+        Lost = stock_state_list[2]
+        Defective = stock_state_list[3]
+        return InStock, Rejected, Lost, Defective
 
 
     def FetchAllComponents(self, **kwargs):
@@ -305,7 +318,7 @@ class DBops:
         # return self.fetched_db_data_list
 
 
-    def UpdateValue(self, table_name, current_data, new_data):
+    def UpdateValue(self, table_name, col_to_update, new_value, conditional_query, **kwargs):
         '''
         :param table_name: Table name to update value in
         :param current_data: current value ->
@@ -313,11 +326,24 @@ class DBops:
         :return:
         '''
 
-        _new_data = str.join(",", [f"{i} = {new_data[i]}" for i in new_data])
-        _old_data = str.join(" AND ", [f"{i} = {current_data[i]}" for i in current_data])
+        query = ""
+        if isinstance(col_to_update, dict):
+            col_to_update = [f"{i} = {col_to_update[i]}" for i in col_to_update]
+        if conditional_query is not None:
+            if isinstance(conditional_query, dict):
+                conditional_query = [f"{i} = {conditional_query[i]}" for i in conditional_query]
+                if "conditional_query_operator" in kwargs:
+                    conditional_query = str.join(f" {kwargs['conditional_query_operator']} ", conditional_query)
+                elif not "conditional_query_operator" in kwargs:
+                    conditional_query = str.join(f" AND ", conditional_query)
+            query = f"UPDATE {table_name} SET {col_to_update} = {new_value} WHERE {conditional_query}"
+        elif conditional_query is None:
+            query = f"UPDATE {table_name} SET {col_to_update} = {new_value}"
 
-        query = f"UPDATE {table_name} SET {_new_data} WHERE {_old_data}"
+        print(query)
         self.db_cursor.execute(query)
+        self.db_cursor.execute("COMMIT")
+        print("funck it changed")
         # self.fetched_db_data_list = self.db_cursor.fetchall()
         # return self.fetched_db_data_list
 
@@ -329,7 +355,7 @@ class DBops:
                                                            "Code": component_code,
                                                            "Count": component_count})
 
-        self.AddRow(table_name="ComponentStockStateCount", row_data={"Component Code": component_code,
+        self.AddRow(table_name="ComponentStockStateCount", row_data={"Code": component_code,
                                                                      "in-stock Count": component_count,
                                                                      "Rejected Count": 0,
                                                                      "Lost Count": 0,
@@ -405,11 +431,20 @@ class DBops:
         self.RemoveRow("ProductStock", row_data=_row_data)
         self.RemoveRow("ComponentsPerProduct", row_data={"`Product Code`": kwargs["Code"]})
 
-    def ChangeProductStockState(self, to_stock_num):
-        current_stock_num = self.FetchProduct(select_cols="Count")
-        self.UpdateValue(table_name="ProductStock", current_data=current_stock_num, new_data=to_stock_num)
+    def ChangeProductStockState(self, to_stock_num, conditional_query):
+        current_stock_num = self.FetchProduct(select_cols=["Count", "Name"], conditional_query=conditional_query)
+        print("rock on")
+        conditional_query_dict = {"Count": current_stock_num[0], "Name": f'{current_stock_num[1]}'}
+        conditional_query_dict = {"Count": current_stock_num[0], "Name": conditional_query["Name"]}
+        print("FUCK YEA RYT")
+        self.UpdateValue(table_name="ProductStock", col_to_update="Count", new_value=to_stock_num, conditional_query=conditional_query_dict)
 
-    def ChangeComponentStockState(self, to_stock_num, **kwargs):
-        current_stock_num = self.FetchComponent(select_cols="Count")
-        self.UpdateValue(table_name="ComponentsPerProduct", current_data=current_stock_num, new_data=to_stock_num)
+    def ChangeComponentStockState(self, stock_type, to_stock_num, **kwargs):
+        conditional_query = kwargs["conditional_query"]
+        if ("Name" in conditional_query and "Code" not in conditional_query) or ("Name" in conditional_query and "Code" in conditional_query):
+            ComponentCode = self.FetchComponent(select_cols=["Code"], conditional_query=conditional_query)[0][0]
+            self.UpdateValue(table_name="ComponentStockStateCount", ComponentCode=ComponentCode, col_to_update=stock_type, new_value=to_stock_num, conditional_query={"`Code`": ComponentCode})
+        if "Name" not in conditional_query and "Code" in conditional_query:
+            self.UpdateValue(table_name="ComponentStockStateCount", ComponentCode=conditional_query["Code"], col_to_update=stock_type, new_value=to_stock_num, conditional_query={"`Code`": conditional_query["Code"]})
+        print("funck")
 

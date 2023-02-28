@@ -244,7 +244,7 @@ class ShowComponentStockTableWindow(DefaultValues):
                 '''
                 for a in cssc_data_set_list:
                     _ComponentStockStateCount_ComponentCode = a[0]
-                    db_cursor.execute(f"SELECT cs.Name FROM ComponentStockStateCount cssc, ComponentStock cs WHERE cssc.`Component Code` = cs.Code AND cs.Code = {_ComponentStockStateCount_ComponentCode}")
+                    db_cursor.execute(f"SELECT cs.Name FROM ComponentStockStateCount cssc, ComponentStock cs WHERE cssc.`Code` = cs.Code AND cs.Code = {_ComponentStockStateCount_ComponentCode}")
                     _ComponentStockStateCount_ComponentName = db_cursor.fetchall()[0][0]
 
                     _ComponentStockStateCount_in_stock_count = a[1]
@@ -341,7 +341,7 @@ class ShowProductStockTableWindow(DefaultValues):
         scl[1] = 0  # used to select 1st column of arbitrarily selected cell
 
         selected_product = self.ProductTable.get_cell_data(r=scl[0], c=scl[1])
-        selected_product_info = self.db_ops.FetchComponentsPerProduct(selected_product)
+        selected_product_info = self.db_ops.FetchComponentsPerProduct(select_cols=["selected_product"])
         component_list = "component: component_count\n"
 
         ProductInfoWindow = Toplevel()
