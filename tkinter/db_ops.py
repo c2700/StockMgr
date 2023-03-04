@@ -1,6 +1,4 @@
-import re
 from baseclasses import *
-import mariadb
 
 
 class DBops:
@@ -48,11 +46,6 @@ class DBops:
 
 
 
-
-
-
-
-
     def FetchAllProducts(self, getcount=False, getstockstate=False):
         '''
         :param getcount: get count column
@@ -82,7 +75,6 @@ class DBops:
 
 
 
-    # def FetchComponent(self, select_cols, getcount=False, getstockstate=False, **kwargs):
     def FetchComponent(self, select_cols, conditional_query, getstockstate=False, **kwargs):
         '''
         :param getcount: fetch count column of specified component table
@@ -91,6 +83,8 @@ class DBops:
         :return:
         '''
 
+        if getstockstate is True:
+            select_cols += ["Count"]
         select_cols = str.join(",", [i for i in select_cols])
         query = f"SELECT {select_cols} FROM ComponentStock "
 
@@ -100,7 +94,7 @@ class DBops:
                 _col_name = i
                 _col_val = conditional_query[i]
                 _ += [f"{_col_name} = {_col_val}"]
-            query += " WHERE "
+            query += "WHERE "
             if ("query_conditional_operator" in kwargs):
                 query += str.join(f" {kwargs['query_conditional_operator']} ", _)
             elif ("query_conditional_operator" not in kwargs):
@@ -110,6 +104,7 @@ class DBops:
             query += f"WHERE {conditional_query}"
 
         print(query)
+        # print(dir(self.db_cursor))
         self.db_cursor.execute(query)
         self.fetched_db_data_list = self.db_cursor.fetchall()
 
@@ -350,12 +345,16 @@ class DBops:
 
 
 
-    def AddComponent(self, component_name, component_code, component_count):
+    # def AddComponent(self, component_name, component_code, component_count):
+    def AddComponent(self, component_name, component_count):
+        _component_code = f"'{RandomCharGenerator(char_len=6)}'"
         self.AddRow(table_name="ComponentStock", row_data={"Name": component_name,
-                                                           "Code": component_code,
+                                                           "Code": _component_code,
+                                                           # "Code": component_code,
                                                            "Count": component_count})
 
-        self.AddRow(table_name="ComponentStockStateCount", row_data={"Code": component_code,
+        self.AddRow(table_name="ComponentStockStateCount", row_data={"Code": _component_code,
+                                                                     # "Code": component_code,
                                                                      "in-stock Count": component_count,
                                                                      "Rejected Count": 0,
                                                                      "Lost Count": 0,
@@ -392,10 +391,11 @@ class DBops:
         for i in component_list_dict:
             _component_name = i
             _component_count = component_list_dict[i]["count"]
-            _component_code = "'" + RandomCharGenerator(char_len=6) + "'"
-            self.AddComponent(_component_name, _component_code, _component_count)
+            # _component_code = f"'{RandomCharGenerator(char_len=6)}'"
+            # self.AddComponent(_component_name, _component_code, _component_count)
+            self.AddComponent(_component_name, _component_count)
 
-        _product_code = "'" + RandomCharGenerator(char_len=6) + "'"
+        _product_code = f"'{RandomCharGenerator(char_len=6)}'"
 
         self.AddRow(table_name="ProductStock",
                     row_data={"Name": product_name,
@@ -405,7 +405,7 @@ class DBops:
         for i in component_list_dict:
             _component_name = i
             _component_count = component_list_dict[_component_name]
-            _component_code = "'" + RandomCharGenerator(char_len=6) + "'"
+            _component_code = f"'{RandomCharGenerator(char_len=6)}'"
             self.AddRow(table_name="ComponentsPerProduct",
                         row_data={
                             "`Product Code`": _product_code,

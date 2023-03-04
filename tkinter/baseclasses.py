@@ -1,5 +1,5 @@
 import tkinter
-from tkinter import Frame, Button, Entry, Toplevel, Label, Spinbox
+from tkinter import Frame, Button, Entry, Toplevel, Label, Spinbox, messagebox
 from tkinter.ttk import Combobox
 from db_ops import *
 import random
@@ -51,10 +51,13 @@ class ChangeStockStateWindow:
         pass
 
 class AddRemoveWindow:
-    def __init__(self, title_text, db_cursor, table_name):
+    # def __init__(self, title_text, db_conn_obj, db_ops_obj, table_name):
+    def __init__(self, title_text, db_ops_obj, table_name):
         self.title_text = title_text
         self.table_name = table_name
-        self.db_cursor = DBops(db_cursor)
+        self.db_ops_obj = db_ops_obj
+        # self.db_conn_obj = db_conn_obj
+        # self.db_ops_obj = DBops(db_conn_obj)
 
         # print("self.title_text -", self.title_text)
         # print("self.table_name -", self.table_name)
@@ -78,39 +81,39 @@ class AddRemoveWindow:
         self.TopFrame.grid(row=0, column=0)
         self.label = Label(self.TopFrame, text=self.title)
 
-        self.component_entry_name = Entry(self.TopFrame, width=30)
-        self.component_quantity_spinbox = Spinbox(self.TopFrame, width=7, increment=True)
-
-        def AddTableRow():
-            self.db_cursor.AddRow(table_name=self.table_name, Name=self.component_entry_name.get(),
-                                  NameCount=self.component_quantity_spinbox.get())
-            # try:
-            #     self.db_ops_obj.AddTableRow(table_name=self.table_name, Name=self.component_entry_name.get(),
-            #                                 NameCount=self.component_quantity_spinbox.get())
-            #     print("haaaa. I'm promoted")
-            # except:
-            #     print("WTF???")
-
-        def RemoveTableRow():
-            self.db_cursor.RemoveRow(table_name=self.table_name, Name=self.component_entry_name.get())
-            # try:
-            #     self.db_ops_obj.RemoveTableRow(table_name=self.table_name, Name=self.component_entry_name.get(),
-            #                                    NameCount=self.component_quantity_spinbox.get())
-            #     print("heehee. I'm gona get fyerd")
-            # except:
-            #     print("I DELETED AN ENTYR COLUM TEEHEE :P")
-
+        self.entry_name = Entry(self.TopFrame, width=30)
+        self.quantity_spinbox = Spinbox(self.TopFrame, width=7, increment=True)
 
         self.BottomFrame = Frame(self.addremovewindow)
         self.BottomFrame.grid(row=1, column=0)
-        self.add_btn = Button(self.BottomFrame, text="Add " + title_text, command=lambda: AddTableRow())
-        self.rem_btn = Button(self.BottomFrame, text="Remove " + title_text, command=lambda: RemoveTableRow())
+        self.add_btn = Button(self.BottomFrame, text="Add " + title_text)
+        self.rem_btn = Button(self.BottomFrame, text="Remove " + title_text)
 
         self.label.grid(row=0, column=0, ipadx=10, ipady=10)
-        self.component_entry_name.grid(row=1, column=0, ipady=2, padx=2, pady=2)
-        self.component_quantity_spinbox.grid(row=1, column=1, ipady=2, padx=10, pady=10)
+        self.entry_name.grid(row=1, column=0, ipady=2, padx=2, pady=2)
+        self.quantity_spinbox.grid(row=1, column=1, ipady=2, padx=10, pady=10)
         self.add_btn.grid(row=0, column=0, padx=2, pady=2)
         self.rem_btn.grid(row=0, column=1, padx=2, pady=2)
+
+    def AddValueCheck(self):
+        if self.quantity_spinbox.get() == "" and self.entry_name.get() == "":
+            messagebox.showerror(message=f"Please enter a Name and Quantity")
+            return 3
+        if self.quantity_spinbox.get() == "" and self.entry_name.get() != "":
+            messagebox.showerror(message=f"Please enter a Quantity")
+            return 2
+        if self.quantity_spinbox.get() != "" and self.entry_name.get() == "":
+            messagebox.showerror(message=f"Please enter a Name")
+            return 1
+        return 0
+
+
+    def RemoveValueCheck(self):
+        if self.entry_name.get() == "":
+            messagebox.showerror(message=f"Please enter a Name")
+            return 3
+        return 0
+
 
 class DefaultValues:
     def __init__(self):

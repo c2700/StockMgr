@@ -3,8 +3,8 @@ import tkinter.messagebox
 from tkinter.ttk import *
 import tksheet
 from tkinter import *
-from mariadb import connect
-from baseclasses import *
+from mariadb import connect, Error
+# from baseclasses import *
 from db_ops import *
 from platform import system
 
@@ -33,7 +33,7 @@ class StockManager(DefaultValues):
 
         # except Exception as e:
         #     print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
-        except mariadb.Error as e:
+        except Error as e:
             print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
             # exit(1)
 
@@ -58,12 +58,12 @@ class StockManager(DefaultValues):
         self.MainWindowButtonsLayout.grid(row=0, column=1, pady=(0, 150))
 
         # creating buttons in table view frame
-        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(db_cursor=self.db_cursor))
-        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(db_cursor=self.db_cursor))
+        self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(db_ops_obj=self.db_ops))
+        self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(db_ops_obj=self.db_ops))
         self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
         self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_cursor=self.db_cursor))
-        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_cursor=self.db_cursor))
-        self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_cursor=self.db_cursor))
+        self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_cursor=self.db_cursor, db_ops_obj=self.db_ops))
+        self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_cursor=self.db_cursor, db_ops_obj=self.db_ops))
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry")
         self.SearchComponentBTn = Button(self.MainWindowButtonsLayout, width=12, text="Search Component", command=lambda: self.SearchWindow())
 
@@ -76,6 +76,9 @@ class StockManager(DefaultValues):
         self.ShowProductTableBTn.grid(row=2, column=1, padx=5, pady=5)
         self.SearchComponentEntry.grid(row=4, column=1, ipadx=10, ipady=5)
         self.SearchComponentBTn.grid(row=4, column=0, padx=35, pady=5, ipadx=10)
+
+        # component keybindings
+        self.SearchComponentEntry.bind("<Return>", lambda event: self.SearchWindow())
 
     def MainWindowTableData(self):
         try:
@@ -112,12 +115,13 @@ class StockManager(DefaultValues):
             SearchComponentEntryValue = self.SearchComponentEntry.get()
 
             result = None
-
             if re.search('^\d+$', SearchComponentEntryValue):
-                result = self.db_ops.FetchComponent(getcount=True, getstockstate=True, component_code=SearchComponentEntryValue)
+                result = self.db_ops.FetchComponent(select_cols=["Name", "Code"], conditional_query={"Code":f"'{SearchComponentEntryValue}"}, getstockstate=True)
+                # result = self.db_ops.FetchComponent(select_cols=["Name", "Code"], conditional_query={"Code":f"'{SearchComponentEntryValue}"}, getstockstate=True)
             if re.search('([0-9]+)?[a-zA-Z]+([0-9]+)?', SearchComponentEntryValue):
-                result = self.db_ops.FetchComponent(getcount=True, getstockstate=True, component_name=SearchComponentEntryValue)
-            if result == 2:
+                result = self.db_ops.FetchComponent(select_cols=["Name", "Code"], conditional_query={"Name":f"'{SearchComponentEntryValue}'"}, getstockstate=True)
+                # result = self.db_ops.FetchComponent(select_cols=["Name", "Code"], conditional_query={"Name":f"'{SearchComponentEntryValue}'"}, getstockstate=True)
+            if result == None:
                 tkinter.messagebox.showwarning(message=f"Component does not exist")
                 return
 
@@ -132,14 +136,48 @@ class StockManager(DefaultValues):
 
 
 class AddRemoveComponentWindow(AddRemoveWindow):
-    def __init__(self, db_cursor):
-        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_cursor=db_cursor, table_name="ComponentStock")
+    def __init__(self, db_ops_obj):
+        self.db_ops_obj = db_ops_obj
+        super(AddRemoveComponentWindow, self).__init__(title_text="Component", db_ops_obj=self.db_ops_obj, table_name="ComponentStock")
+        self.add_btn.configure(command=lambda: self.AddComponentValue())
+        self.rem_btn.configure(command=lambda: self.RemoveComponentValue())
+
+    def AddComponentValue(self):
+        if self.AddValueCheck() == 0:
+            _component_name = f"'{self.entry_name.get()}'"
+            _component_quantity = self.quantity_spinbox.get()
+            # _component_code = RandomCharGenerator(char_len=6)
+            # self.db_ops_obj.AddComponent(_component_name, _component_code, _component_quantity)
+            self.db_ops_obj.AddComponent(_component_name, _component_quantity)
+
+    def RemoveComponentValue(self):
+        if self.RemoveValueCheck() == 0:
+            _component_name = f"'{self.entry_name.get()}'"
+            _component_code = self.db_ops_obj.FetchComponent(select_cols=["Code"], conditional_query={"Name": _component_name})
+            self.db_ops_obj.RemoveComponent(component_name=_component_name, component_code=_component_code)
 
 
 
 class AddRemoveProductWindow(AddRemoveWindow):
-    def __init__(self, db_cursor):
-        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_cursor=db_cursor, table_name="ProductStock")
+    def __init__(self, db_ops_obj):
+        self.db_ops_obj = db_ops_obj
+        super(AddRemoveProductWindow, self).__init__(title_text="Product", db_ops_obj=self.db_ops_obj, table_name="ProductStock")
+        self.add_btn.configure(command=lambda: self.AddProductValue())
+        self.rem_btn.configure(command=lambda: self.RemoveProductValue())
+    def AddProductValue(self):
+        if self.AddValueCheck() == 0:
+            _product_name = f"'{self.entry_name.get()}'"
+            _product_count = self.quantity_spinbox.get()
+            # _product_code = RandomCharGenerator(char_len=8)
+            _component_list_dict = {}
+            self.db_ops_obj.AddProduct(_product_name, _product_count, component_list_dict=_component_list_dict)
+            # self.db_ops_obj.AddProduct(_component_name, _component_code, _component_quantity)
+
+    def RemoveProductValue(self):
+        if self.RemoveValueCheck() == 0:
+            _product_name = self.entry_name.get()
+            _product_code = self.db_ops_obj.FetchProduct(select_cols=["Code"], conditional_query={"Name": f"'{_product_name}"})
+            self.db_ops_obj.RemoveProduct(component_name=_product_name, component_code=_product_code)
 
 
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
@@ -153,9 +191,10 @@ class ChangeProductStateWindow(ChangeStockStateWindow):
 
 
 class ShowComponentStockTableWindow(DefaultValues):
-    def __init__(self, db_cursor):
+    def __init__(self, db_cursor, db_ops_obj):
         super(ShowComponentStockTableWindow, self).__init__()
-        self.db_conn_obj = db_cursor
+        self.db_cursor = db_cursor
+        self.db_ops_obj = db_ops_obj
 
         self.ComponentStockTableWindow = Toplevel()
         self.ComponentStockTableWindow.title = "Component Stock Table"
@@ -174,13 +213,13 @@ class ShowComponentStockTableWindow(DefaultValues):
         self.ChangeComponentStockStateWindowTitle = Label(self.LabelFrame, text="Component Stock Table")
         self.ChangeComponentStockStateWindowTitle.grid()
 
-        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(db_cursor=self.db_conn_obj))
+        self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(db_ops_obj=self.db_ops_obj))
         self.AddRemoveButton.grid(row=0, column=0, padx=10)
 
-        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_conn_obj))
+        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
         self.ChangeStockStateBtn.grid(row=0, column=1, padx=10)
 
-        self.RefreshInfoBtn = Button(self.Button_Frame, text="Refresh Info", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_conn_obj))
+        self.RefreshInfoBtn = Button(self.Button_Frame, text="Refresh Info", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
         self.ChangeStockStateBtn.grid(row=0, column=2, padx=10)
 
         self.ComponentStockTabbedPaneFrame = Frame(self.BottomFrame)
@@ -188,7 +227,7 @@ class ShowComponentStockTableWindow(DefaultValues):
 
         self.ComponentStockTabbedPane = Notebook(self.ComponentStockTabbedPaneFrame)
         self.ComponentStockTabbedPane.grid(row=1, column=0)
-        available_component_list, defective_component_list, rejected_component_list, lost_component_list, out_of_stock_component_list = self.ComponentWindowTableData(db_cursor=self.db_conn_obj)
+        available_component_list, defective_component_list, rejected_component_list, lost_component_list, out_of_stock_component_list = self.ComponentWindowTableData(db_cursor=self.db_cursor)
 
         self.AvailableTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=available_component_list, align="center")
         self.DefectiveTab = tksheet.Sheet(self.ComponentStockTabbedPane, headers=["Name", "Count"], data=defective_component_list, align="center")
@@ -273,14 +312,14 @@ class ShowComponentStockTableWindow(DefaultValues):
 
 
 class ShowProductStockTableWindow(DefaultValues):
-    def __init__(self, db_cursor):
+    def __init__(self, db_cursor, db_ops_obj):
         super(ShowProductStockTableWindow, self).__init__()
         self.ProductStockTableWindow = Toplevel()
         self.ProductStockTableWindow.title = "Product Stock Table"
         self.ProductStockTableWindow.minsize(width=500, height=500)
 
         self.db_cursor = db_cursor
-        self.db_ops = DBops(self.db_cursor)
+        self.db_ops_obj = db_ops_obj
 
         self.TitleFrame = Frame(self.ProductStockTableWindow)
         self.TitleFrame.grid(column=0, row=0)
@@ -313,7 +352,7 @@ class ShowProductStockTableWindow(DefaultValues):
 
     def ProductStockData(self):
         try:
-            db_data_set_list = self.db_ops.FetchAllProducts(getcount=True, getstockstate=True)
+            db_data_set_list = self.db_ops_obj.FetchAllProducts(getcount=True, getstockstate=True)
             self.data_list = []
             if db_data_set_list is None:
                 print("SHIIIIITTTTT")
@@ -339,7 +378,8 @@ class ShowProductStockTableWindow(DefaultValues):
         scl[1] = 0  # used to select 1st column of arbitrarily selected cell
 
         selected_product = self.ProductTable.get_cell_data(r=scl[0], c=scl[1])
-        selected_product_info = self.db_ops.FetchComponentsPerProduct(select_cols=["selected_product"])
+        # selected_product_info = self.db_ops.FetchComponentsPerProduct(select_cols=["selected_product"])
+        selected_product_info = self.db_ops_obj.FetchComponentsPerProduct(conditional_query={"Name": f"'{selected_product}'"}, query_conditional_operator="AND")
         component_list = "component: component_count\n"
 
         ProductInfoWindow = Toplevel()
@@ -464,12 +504,12 @@ class ShowProductStockTableWindow(DefaultValues):
             _ComponentCount = ComponentCountSpinBox.get()
             _components_dict = {}
             for i in AddStockListboxComponentList:
-                _ = self.db_ops.FetchComponent(component_name=i)
+                _ = self.db_ops_obj.FetchComponent(component_name=i)
                 _name = _[0][0]
                 _code = f"_{_[0][1]}"
                 _components_dict.update({ _code: _ComponentCount})
 
-            self.db_ops.AddColumn()
+            self.db_ops_obj.AddColumn()
 
 
 
