@@ -1,5 +1,5 @@
 import re
-from baseclasses import RandomCharGenerator
+from baseclasses import *
 import mariadb
 
 
@@ -26,7 +26,7 @@ class DBops:
 
         query = ""
         if "Name" in kwargs:
-            kwargs['Name'] = f"{kwargs['Name']}"
+            kwargs['Name'] = f"'{kwargs['Name']}'"
 
         _conditional_query = kwargs["conditional_query"]
         _conditional_query = [f"{i} = {_conditional_query[i]}" for i in _conditional_query]
@@ -42,7 +42,7 @@ class DBops:
 
         print(query)
         self.db_cursor.execute(query)
-        _ret = self.db_cursor.fetchall()[0]
+        _ret = self.db_cursor.fetchall()
         print(_ret)
         return _ret
 
@@ -114,7 +114,7 @@ class DBops:
         self.fetched_db_data_list = self.db_cursor.fetchall()
 
         if self.fetched_db_data_list == []:
-            return 2
+            return None
 
         if self.fetched_db_data_list != []:
             if getstockstate is True:

@@ -85,10 +85,9 @@ class StockManager(DefaultValues):
                 print("SHIIIIITTTTT")
             if db_data_set_list is not None:
                 for i in db_data_set_list[0]:
-                    temp_data_list = list(i)
-                    stock_state = 0 if temp_data_list[2] > 0 else 1
-                    temp_data_list[2] = self.stock_state_dict[int(stock_state)]
-                    data_list += [temp_data_list]
+                    _temp_data = list(i[0][:-1])
+                    _stock_state = [i[1]]
+                    data_list += [_temp_data + _stock_state]
                 return data_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB???? ", e)
@@ -320,10 +319,9 @@ class ShowProductStockTableWindow(DefaultValues):
                 print("SHIIIIITTTTT")
             if db_data_set_list is not None:
                 for i in db_data_set_list:
-                    temp_data_list = list(i)
-                    stock_state = 0 if temp_data_list[2] > 0 else 1
-                    temp_data_list[2] = self.stock_state_dict[int(stock_state)]
-                    self.data_list += [temp_data_list]
+                    _temp_data = list(i[0][:-1])
+                    _stock_state = [i[1]]
+                    self.data_list += [_temp_data + _stock_state]
                 return self.data_list
         except Exception as e:
             print("WTF IS RONG WID DIS DB NOOOO 222222 BLAH BLAH???? ", e)
