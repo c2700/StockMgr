@@ -17,11 +17,28 @@ def RandomCharGenerator(char_len):
     return random_val
 
 
-class ChangeStockStateWindow:
-    def __init__(self, stock_type_text, db_conn_obj, table_name):
+class DefaultValues:
+    def __init__(self):
+        self.stock_state_dict = {
+            0: "in-stock",
+            1: "out-of stock",
+            2: "lost",
+            3: "damaged",
+            4: "defective",
+            5: "rejected",
+            6: "ordered"
+        }
+
+
+
+class ChangeStockStateWindow(DefaultValues):
+    # def __init__(self, stock_type_text, db_conn_obj, table_name):
+    def __init__(self, stock_type_text, db_ops_obj, table_name):
+        super(ChangeStockStateWindow, self).__init__()
         self.stock_type_text = stock_type_text
         self.table_name = table_name
-        self.db_conn_obj = db_conn_obj
+        # self.db_conn_obj = db_conn_obj
+        self.db_ops_obj = db_ops_obj
 
         self.title = "change " + self.stock_type_text + " stock state"
         self.stockstatewindow = Toplevel()
@@ -39,10 +56,12 @@ class ChangeStockStateWindow:
 
         self.Title.grid(row=0, column=1, pady=10)
         self.StockNameCombobox.grid(row=1, column=0, padx=15, pady=5)
-        self.FromStockStateCombobox.grid(row=1, column=1, padx=5, pady=5)
-        self.ToStockStateCombobox.grid(row=2, column=1, padx=5, pady=5)
+        self.FromStockStateCombobox.grid(row=1, column=1, padx=5, pady=5)  ## top
+        self.ToStockStateCombobox.grid(row=2, column=1, padx=5, pady=5)  ## bottom
         self.StockQuantitySpinbox.grid(row=2, column=2, padx=5, pady=5)
         self.ChangeBtn.grid(row=3, column=0, padx=5, pady=5)
+
+
 
     def ChangeBtn(self):
         pass
@@ -113,17 +132,4 @@ class AddRemoveWindow:
             messagebox.showerror(message=f"Please enter a Name")
             return 3
         return 0
-
-
-class DefaultValues:
-    def __init__(self):
-        self.stock_state_dict = {
-            0: "in-stock",
-            1: "out-of stock",
-            2: "lost",
-            3: "damaged",
-            4: "defective",
-            5: "rejected",
-            6: "ordered"
-        }
 

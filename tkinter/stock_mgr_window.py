@@ -4,7 +4,7 @@ from tkinter.ttk import *
 import tksheet
 from tkinter import *
 from mariadb import connect, Error
-# from baseclasses import *
+from baseclasses import *
 from db_ops import *
 from platform import system
 
@@ -59,9 +59,11 @@ class StockManager(DefaultValues):
 
         # creating buttons in table view frame
         self.AddRemComponentBtn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Component", command=lambda: AddRemoveComponentWindow(db_ops_obj=self.db_ops))
+        # self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: ShowProductStockTableWindow(db_cursor=self.db_cursor, db_ops_obj=self.db_ops).AddProductWindow())
+        # self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: None)
         self.AddRemProductBTn = Button(self.MainWindowButtonsLayout, width=30, text="Add/Remove Product", command=lambda: AddRemoveProductWindow(db_ops_obj=self.db_ops))
-        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
-        self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_cursor=self.db_cursor))
+        self.ChangeComponentStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Component Stock State", command=lambda: ChangeComponentStockStateWindow(db_ops_obj=self.db_ops))
+        self.ChangeProductStockStateBTn = Button(self.MainWindowButtonsLayout, width=30, text="Change Product Stock State", command=lambda: ChangeProductStateWindow(db_ops_obj=self.db_ops))
         self.ShowStockTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Component Stock Table", command=lambda: ShowComponentStockTableWindow(db_cursor=self.db_cursor, db_ops_obj=self.db_ops))
         self.ShowProductTableBTn = Button(self.MainWindowButtonsLayout, width=30, text="Show Product Stock Table", command=lambda: ShowProductStockTableWindow(db_cursor=self.db_cursor, db_ops_obj=self.db_ops))
         self.SearchComponentEntry = Entry(self.MainWindowButtonsLayout, width=30, name="search_component_stock_entry")
@@ -181,13 +183,113 @@ class AddRemoveProductWindow(AddRemoveWindow):
 
 
 class ChangeComponentStockStateWindow(ChangeStockStateWindow):
-    def __init__(self, db_cursor):
-        super(ChangeComponentStockStateWindow, self).__init__(stock_type_text="Component", db_conn_obj=db_cursor, table_name="ComponentStock")
+    def __init__(self, db_ops_obj):
+        self.db_ops_obj = db_ops_obj
+
+        self._inStock = 0
+        self._rejected = 0
+        self._lost = 0
+        self._defective = 0
+
+        super(ChangeComponentStockStateWindow, self).__init__(stock_type_text="Component", db_ops_obj=self.db_ops_obj, table_name="ComponentStock")
+        self.ComponentName = None
+        self._component_list = db_ops_obj.FetchAllComponents()
+        self.ComponentNameComboBox = self.StockNameCombobox
+
+        _ = []
+        for i in self._component_list:
+            _ += [i[0]]
+        self.ComponentNameComboBox["values"] = _
+
+        self.ComponentNameComboBox.bind("<<ComboboxSelected>>", lambda event: self.AutoFill_FromStockStateComboBox())
+    def AutoFill_FromStockStateComboBox(self):
+        self.ComponentName = self.ComponentNameComboBox.get()
+        if self.ComponentName == "" or self.ComponentName is None:
+            self.FromStockStateCombobox["values"] = [""]
+        elif self.ComponentName == "" or self.ComponentName is not None:
+            self.Component_code = self.db_ops_obj.FetchComponent(select_cols=["Code"], conditional_query={"Name": f"'{self.ComponentName}'"})[0][0]
+
+            self._inStock, self._rejected, self._lost, self._defective = self.db_ops_obj.FetchComponentAllStocks(Code=self.Component_code)
+
+            self._stock_states = []
+
+            if self._inStock > 0:
+                self._stock_states += [self.stock_state_dict[1]]
+            if self._lost > 0:
+                self._stock_states += [self.stock_state_dict[2]]
+            if self._defective > 0:
+                self._stock_states += [self.stock_state_dict[4]]
+            if self._rejected > 0:
+                self._stock_states += [self.stock_state_dict[5]]
+
+            self.FromStockStateCombobox["values"] = self._stock_states
+
+        self.FromStockStateCombobox.bind("<<ComboboxSelected>>", lambda event: self.AutoFill_ToStockStateComboBox())
+
+    def AutoFill_ToStockStateComboBox(self):
+        print("IS IT NOR WORKING")
+        if self.ComponentName is None:
+            self.ToStockStateCombobox["values"] = [""]
+
+        elif self.ComponentName is not None:
+            self.ToStockStateCombobox.grab_current()
+            # self.db_ops_obj.FetchComponentAllStocks(Code=self.Component_code)[0]
+            # sleep(1)
+            self._stock_states = []
+            if self._inStock > 0:
+                self._stock_states += [self.stock_state_dict[1]]
+            if self._lost > 0:
+                self._stock_states += [self.stock_state_dict[2]]
+            if self._defective > 0:
+                self._stock_states += [self.stock_state_dict[4]]
+            if self._rejected > 0:
+                self._stock_states += [self.stock_state_dict[5]]
+
+            self.ToStockStateCombobox["values"] = self._stock_states
+
+            self.ChangeBtn.configure(command=lambda: self.ChangeBtnFunc())
+
+
+    def ChangeBtnFunc(self):
+        if self.ComponentNameComboBox.get() == "":
+            messagebox.showerror(message="Please Select a Component Name to transfer the component to")
+            return 1
+        if self.ToStockStateCombobox == "":
+            messagebox.showerror(message="Please Select a Stock State to transfer the component to")
+            return 2
+        if self.FromStockStateCombobox == "":
+            messagebox.showerror(message="Please Select a Stock State to transfer the component from")
+            return 3
+        if self.StockQuantitySpinbox.get() == "":
+            messagebox.showerror(message="Please Select the quantity of components to transfer")
+            return 4
+        if not isinstance(eval(self.StockQuantitySpinbox.get()), int) or isinstance(eval(self.StockQuantitySpinbox.get()), float):
+            messagebox.showerror(message="Please enter number in quantity")
+            return 5
+        if all(i != "" for i in [self.StockQuantitySpinbox.get(), self.FromStockStateCombobox.get(), self.ToStockStateCombobox.get(), self.ComponentNameComboBox.get()]):
+            _change_quantity = self.StockQuantitySpinbox.get()
+            _from_state = self.FromStockStateCombobox.get()
+            _to_state = self.ToStockStateCombobox.get()
+            if (_change_quantity > _to_state) and (_to_state != "in-stock"):
+                messagebox.showinfo(message="done")
+        else:
+            messagebox.showerror(message="Please enter the necessary values")
+            return 6
+
+
+
 
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
-    def __init__(self, db_cursor):
-        super(ChangeProductStateWindow, self).__init__(stock_type_text="Component", db_conn_obj=db_cursor, table_name="ProductStock")
+    def __init__(self, db_ops_obj):
+        self.db_ops_obj = db_ops_obj
+        super(ChangeProductStateWindow, self).__init__(stock_type_text="Component", db_ops_obj=db_ops_obj, table_name="ProductStock")
+        _product_list = db_ops_obj.FetchAllProducts()
+        _ = []
+        for i in _product_list:
+            _ += [i]
+        self.FromStockStateCombobox["values"] = _
+
 
 
 class ShowComponentStockTableWindow(DefaultValues):
@@ -216,10 +318,12 @@ class ShowComponentStockTableWindow(DefaultValues):
         self.AddRemoveButton = Button(self.Button_Frame, text="Add/Remove", command=lambda: AddRemoveComponentWindow(db_ops_obj=self.db_ops_obj))
         self.AddRemoveButton.grid(row=0, column=0, padx=10)
 
-        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
+        self.ChangeStockStateBtn = Button(self.Button_Frame, text="Change Stock State", command=lambda: ChangeComponentStockStateWindow(
+            db_ops_obj=self.db_cursor))
         self.ChangeStockStateBtn.grid(row=0, column=1, padx=10)
 
-        self.RefreshInfoBtn = Button(self.Button_Frame, text="Refresh Info", command=lambda: ChangeComponentStockStateWindow(db_cursor=self.db_cursor))
+        self.RefreshInfoBtn = Button(self.Button_Frame, text="Refresh Info", command=lambda: ChangeComponentStockStateWindow(
+            db_ops_obj=self.db_cursor))
         self.ChangeStockStateBtn.grid(row=0, column=2, padx=10)
 
         self.ComponentStockTabbedPaneFrame = Frame(self.BottomFrame)

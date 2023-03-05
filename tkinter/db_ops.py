@@ -121,14 +121,14 @@ class DBops:
                 return self.fetched_db_data_list
 
     def FetchComponentAllStocks(self, Code):
-        query = f"SELECT `in-stock Count`,`Rejected Count`,`Lost Count`,`Defective Count` FROM ComponentStockStateCount WHERE `Code` = {Code}"
-        self.db_cursor.execute(query)
-        stock_state_list = self.db_cursor.fetchall()[0]
-        InStock = stock_state_list[0]
-        Rejected = stock_state_list[1]
-        Lost = stock_state_list[2]
-        Defective = stock_state_list[3]
-        return InStock, Rejected, Lost, Defective
+        _query = f"SELECT `in-stock Count`,`Rejected Count`,`Lost Count`,`Defective Count` FROM ComponentStockStateCount WHERE `Code` = {Code}"
+        self.db_cursor.execute(_query)
+        _stock_state_list = self.db_cursor.fetchall()[0]
+        _inStock = _stock_state_list[0]
+        _rejected = _stock_state_list[1]
+        _lost = _stock_state_list[2]
+        _defective = _stock_state_list[3]
+        return _inStock, _rejected, _lost, _defective
 
 
     def FetchAllComponents(self, **kwargs):
@@ -144,7 +144,8 @@ class DBops:
         query = ""
         select_cols = "Name"
         if "select_cols" in kwargs:
-            select_cols = str.join(", ", kwargs["select_cols"])
+            select_cols = [select_cols] + kwargs["select_cols"]
+            select_cols = str.join(", ", select_cols)
 
         if "conditional_query" in kwargs:
             conditional_query = kwargs["conditional_query"]
