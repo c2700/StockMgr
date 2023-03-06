@@ -201,6 +201,7 @@ class ChangeComponentStockStateWindow(ChangeStockStateWindow):
             _ += [i[0]]
         self.ComponentNameComboBox["values"] = _
 
+        self.ChangeBtn.configure(command=lambda: self.ChangeBtnFunc())
         self.ComponentNameComboBox.bind("<<ComboboxSelected>>", lambda event: self.AutoFill_FromStockStateComboBox())
     def AutoFill_FromStockStateComboBox(self):
         self.ComponentName = self.ComponentNameComboBox.get()
@@ -211,18 +212,17 @@ class ChangeComponentStockStateWindow(ChangeStockStateWindow):
 
             self._inStock, self._rejected, self._lost, self._defective = self.db_ops_obj.FetchComponentAllStocks(Code=self.Component_code)
 
-            self._stock_states = []
-
+            self._from_stock_states_list = []
             if self._inStock > 0:
-                self._stock_states += [self.stock_state_dict[1]]
+                self._from_stock_states_list += [self.stock_state_dict[1]]
             if self._lost > 0:
-                self._stock_states += [self.stock_state_dict[2]]
+                self._from_stock_states_list += [self.stock_state_dict[2]]
             if self._defective > 0:
-                self._stock_states += [self.stock_state_dict[4]]
+                self._from_stock_states_list += [self.stock_state_dict[4]]
             if self._rejected > 0:
-                self._stock_states += [self.stock_state_dict[5]]
+                self._from_stock_states_list += [self.stock_state_dict[5]]
 
-            self.FromStockStateCombobox["values"] = self._stock_states
+            self.FromStockStateCombobox["values"] = self._from_stock_states_list
 
         self.FromStockStateCombobox.bind("<<ComboboxSelected>>", lambda event: self.AutoFill_ToStockStateComboBox())
 
@@ -235,22 +235,49 @@ class ChangeComponentStockStateWindow(ChangeStockStateWindow):
             self.ToStockStateCombobox.grab_current()
             # self.db_ops_obj.FetchComponentAllStocks(Code=self.Component_code)[0]
             # sleep(1)
-            self._stock_states = []
-            if self._inStock > 0:
-                self._stock_states += [self.stock_state_dict[1]]
-            if self._lost > 0:
-                self._stock_states += [self.stock_state_dict[2]]
-            if self._defective > 0:
-                self._stock_states += [self.stock_state_dict[4]]
-            if self._rejected > 0:
-                self._stock_states += [self.stock_state_dict[5]]
 
-            self.ToStockStateCombobox["values"] = self._stock_states
+            _ = {
+                    "1": self._inStock,
+                    "2": self._lost,
+                    "4": self._defective,
+                    "5": self._rejected
+            }
 
-            self.ChangeBtn.configure(command=lambda: self.ChangeBtnFunc())
+            self._to_stock_states_list = []
+            for i in _:
+                if self.FromStockStateCombobox.get() == self.stock_state_dict[int(i)]:
+                    continue
+                else:
+                    self._to_stock_states_list += [self.stock_state_dict[int(i)]]
+
+            self.ToStockStateCombobox["values"] = self._to_stock_states_list
+
+            # self.StockQuantitySpinbox.configure(command=lambda event: self.SpinBoxFunc())
+            # self.StockQuantitySpinbox.bind("<Key>", lambda event: self.SpinBoxFunc())
+            self.StockQuantitySpinbox.bind("<Return>", lambda event: self.SpinBoxFunc())
+            # self.StockQuantitySpinbox.bind("<Button-1>", lambda event: self.SpinBoxFunc())
+            # self.StockQuantitySpinbox.bind("<Up>", lambda event: self.SpinBoxFunc())
+            # self.StockQuantitySpinbox.bind("<Down>", lambda event: self.SpinBoxFunc())
+            # self.StockQuantitySpinbox.bind("<>", lambda event: self.SpinBoxFunc())
+            # self.StockQuantitySpinbox.bind("<>", lambda event: self.SpinBoxFunc())
+
+    def SpinBoxFunc(self):
+        _ = {
+            "in-stock": self._inStock,
+            "lost": self._lost,
+            "defective": self._defective,
+            "rejected": self._rejected
+        }
+        if self.StockQuantitySpinbox.get() == "":
+            pass
+        if int(self.StockQuantitySpinbox.get()) > _[self.FromStockStateCombobox.get()]:
+            messagebox.showerror(message="The quantity to change to is greater than what is available")
+            print("it's too much")
+
 
 
     def ChangeBtnFunc(self):
+        self.SpinBoxFunc()
         if self.ComponentNameComboBox.get() == "":
             messagebox.showerror(message="Please Select a Component Name to transfer the component to")
             return 1
