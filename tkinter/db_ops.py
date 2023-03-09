@@ -1,4 +1,4 @@
-from baseclasses import *
+from baseclasses import RandomCharGenerator
 
 
 class DBops:
@@ -41,7 +41,6 @@ class DBops:
         print(query)
         self.db_cursor.execute(query)
         _ret = self.db_cursor.fetchall()
-        print(_ret)
         return _ret
 
 
@@ -189,6 +188,7 @@ class DBops:
             _component_count = i[1]
             _components_per_product_dict.update({_component_name: _component_count})
         print(_components_per_product_dict)
+        return _components_per_product_dict
 
         # SET @var=(SELECT `Product Code` FROM ComponentsPerProduct WHERE `Product Code` = 653);
         # self.db_cursor.execute("SELECT Name FROM ")
@@ -391,10 +391,10 @@ class DBops:
         # "name": {"count": ""}
         for i in component_list_dict:
             _component_name = i
-            _component_count = component_list_dict[i]["count"]
-            # _component_code = f"'{RandomCharGenerator(char_len=6)}'"
+            _component_count = component_list_dict[_component_name]["count"]
+            _component_code = component_list_dict[_component_name]["code"]
             # self.AddComponent(_component_name, _component_code, _component_count)
-            self.AddComponent(_component_name, _component_count)
+            # self.AddComponent(_component_name, _component_count)
 
         _product_code = f"'{RandomCharGenerator(char_len=6)}'"
 
@@ -405,12 +405,12 @@ class DBops:
 
         for i in component_list_dict:
             _component_name = i
-            _component_count = component_list_dict[_component_name]
-            _component_code = f"'{RandomCharGenerator(char_len=6)}'"
+            _component_count = component_list_dict[_component_name]["count"]
+            _component_code = component_list_dict[_component_name]["code"]
             self.AddRow(table_name="ComponentsPerProduct",
                         row_data={
                             "`Product Code`": _product_code,
-                            "`Component Code`": _component_count,
+                            "`Component Code`": _component_code,
                             "`Component Code Count`": _component_count})
 
     def RemoveProduct(self, **kwargs):

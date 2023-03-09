@@ -1,13 +1,13 @@
 import tkinter
 from tkinter import Frame, Button, Entry, Toplevel, Label, Spinbox, messagebox
 from tkinter.ttk import Combobox
-from db_ops import *
+# from db_ops import *
 import random
 
 
 def RandomCharGenerator(char_len):
-    chr_list=[chr(i) for i in range(48, 58)]
-    chr_list+=[chr(i) for i in range(65, 91)]
+    chr_list = [chr(i) for i in range(48, 58)]
+    chr_list += [chr(i) for i in range(65, 91)]
 
     random_val = ""
 
@@ -28,7 +28,6 @@ class DefaultValues:
             5: "rejected",
             6: "ordered"
         }
-
 
 
 class ChangeStockStateWindow(DefaultValues):
@@ -56,11 +55,10 @@ class ChangeStockStateWindow(DefaultValues):
 
         self.Title.grid(row=0, column=1, pady=10)
         self.StockNameCombobox.grid(row=1, column=0, padx=15, pady=5)
-        self.FromStockStateCombobox.grid(row=1, column=1, padx=5, pady=5)  ## top
-        self.ToStockStateCombobox.grid(row=2, column=1, padx=5, pady=5)  ## bottom
+        self.FromStockStateCombobox.grid(row=1, column=1, padx=5, pady=5)  # top
+        self.ToStockStateCombobox.grid(row=2, column=1, padx=5, pady=5)  # bottom
         self.StockQuantitySpinbox.grid(row=2, column=2, padx=5, pady=5)
         self.ChangeBtn.grid(row=3, column=0, padx=5, pady=5)
-
 
 
     def ChangeBtn(self):
@@ -126,10 +124,8 @@ class AddRemoveWindow:
             return 1
         return 0
 
-
     def RemoveValueCheck(self):
         if self.entry_name.get() == "":
             messagebox.showerror(message=f"Please enter a Name")
             return 3
         return 0
-
