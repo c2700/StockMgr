@@ -1,4 +1,5 @@
 from baseclasses import RandomCharGenerator
+import re
 
 
 class DBops:
@@ -6,7 +7,7 @@ class DBops:
         self.db_cursor = db_cursor
         self.fetched_db_data_list = []
 
-    ### Fetch operations=s
+    ### Fetch operations
     # def FetchProduct(self, getcount=False, getstockstate=False, **kwargs):
     def FetchProduct(self, select_cols=None, **kwargs):
         '''
@@ -22,25 +23,27 @@ class DBops:
         :return:
         '''
 
-        query = ""
+        _query = ""
         if "Name" in kwargs:
             kwargs['Name'] = f"'{kwargs['Name']}'"
 
         _conditional_query = kwargs["conditional_query"]
-        _conditional_query = [f"{i} = {_conditional_query[i]}" for i in _conditional_query]
-        _conditional_query = str.join(" AND ", _conditional_query)
+        if isinstance(_conditional_query, dict):
+            _conditional_query = [f"{i} = {_conditional_query[i]}" for i in _conditional_query]
+            _conditional_query = str.join(" AND ", _conditional_query)
 
         if select_cols is not None:
-            _select_cols = [i for i in select_cols]
-            _select_cols = str.join(",", _select_cols)
+            select_cols = [i for i in select_cols]
+            select_cols = str.join(",", select_cols)
+        elif select_cols is None:
+            select_cols = "Name"
 
-            query = f"SELECT {_select_cols} FROM ProductStock WHERE {_conditional_query}"
-        else:
-            query = f"SELECT Name FROM ProductStock WHERE {_conditional_query}"
+        _query = f"SELECT {select_cols} FROM ProductStock WHERE {_conditional_query}"
 
-        print(query)
-        self.db_cursor.execute(query)
+        print(_query)
+        self.db_cursor.execute(_query)
         _ret = self.db_cursor.fetchall()
+        # return self.db_cursor.fetchall()
         return _ret
 
 
@@ -83,9 +86,11 @@ class DBops:
         '''
 
         if getstockstate is True:
-            select_cols += ["Count"]
+            if "Count" not in select_cols:
+                select_cols += ["Count"]
         select_cols = str.join(",", [i for i in select_cols])
-        query = f"SELECT {select_cols} FROM ComponentStock "
+        query = f"SELECT {select_cols} FROM {kwargs['table_name']} " if "table_name" in kwargs else f"SELECT {select_cols} FROM ComponentStock "
+        # query = f"SELECT {select_cols} FROM ComponentStock "
 
         _ = []
         if isinstance(conditional_query, dict):
@@ -169,7 +174,18 @@ class DBops:
 
     def FetchComponentsPerProduct(self, **kwargs):
         _components_per_product_dict = {}
-        _ = self.FetchProduct(select_cols=["Name", "Code"], **kwargs)
+        # _ = self.FetchProduct(select_cols=["Name", "Code"], **kwargs)
+        # _ = self.FetchProduct(select_cols=["Name", "Code"], conditional_query=kwargs["conditional_query"]) if "conditional_query" in kwargs else self.FetchProduct(select_cols=["Name", "Code"], **kwargs)
+        _conditional_query = kwargs["conditional_query"]
+        # del _conditional_query["Count"]
+        _ = self.FetchProduct(select_cols=["Name", "Code"], conditional_query=_conditional_query)
+        '''
+        _ = None
+        if "conditional_query" in kwargs:
+            _ = self.FetchProduct(select_cols=["Name", "Code"], conditional_query=kwargs["conditional_query"])
+        elif "conditional_query" not in kwargs:
+            _ = self.FetchProduct(select_cols=["Name", "Code"], **kwargs)
+        '''
         _ProductName = _[0][0]
         _ProductCode = _[0][1]
 
@@ -177,6 +193,12 @@ class DBops:
         self.db_cursor.execute(_query)
         _component_code_count_list = self.db_cursor.fetchall()
 
+        for i in _component_code_count_list:
+            _component_code = i[0]
+            _component_code_count = i[1]
+            _components_per_product_dict.update({_component_code: _component_code_count})
+
+        '''
         _conditional_query = []
         for i in _component_code_count_list:
             _component_code = i[0]
@@ -184,9 +206,11 @@ class DBops:
             _conditional_query += [f"Code = {_component_code}"]
         _conditional_query = str.join(" OR ", _conditional_query)
         for i in self.FetchComponent(select_cols=["Name", "Count"], conditional_query=_conditional_query):
+        # for i in self.FetchComponentsPerProduct(conditional_query=_conditional_query):
             _component_name = i[0]
             _component_count = i[1]
             _components_per_product_dict.update({_component_name: _component_count})
+        '''
         print(_components_per_product_dict)
         return _components_per_product_dict
 
@@ -314,7 +338,7 @@ class DBops:
         # return self.fetched_db_data_list
 
 
-    def UpdateValue(self, table_name, col_to_update, new_value, conditional_query, **kwargs):
+    def UpdateValue(self, table_name, update_fields, conditional_query, **kwargs):
         '''
         :param table_name: Table name to update value in
         :param current_data: current value ->
@@ -323,8 +347,9 @@ class DBops:
         '''
 
         query = ""
-        if isinstance(col_to_update, dict):
-            col_to_update = [f"{i} = {col_to_update[i]}" for i in col_to_update]
+        if isinstance(update_fields, dict):
+            update_fields = [f"{i} = {update_fields[i]}" for i in update_fields]
+            update_fields = str.join(",", update_fields)
         if conditional_query is not None:
             if isinstance(conditional_query, dict):
                 conditional_query = [f"{i} = {conditional_query[i]}" for i in conditional_query]
@@ -332,13 +357,13 @@ class DBops:
                     conditional_query = str.join(f" {kwargs['conditional_query_operator']} ", conditional_query)
                 elif not "conditional_query_operator" in kwargs:
                     conditional_query = str.join(f" AND ", conditional_query)
-            query = f"UPDATE {table_name} SET {col_to_update} = {new_value} WHERE {conditional_query}"
+            query = f"UPDATE {table_name} SET {update_fields} WHERE {conditional_query}"
         elif conditional_query is None:
-            query = f"UPDATE {table_name} SET {col_to_update} = {new_value}"
+            query = f"UPDATE {table_name} SET {update_fields}"
 
         print(query)
         self.db_cursor.execute(query)
-        self.db_cursor.execute("COMMIT")
+        # self.db_cursor.execute("COMMIT")
         print("funck it changed")
         # self.fetched_db_data_list = self.db_cursor.fetchall()
         # return self.fetched_db_data_list
@@ -438,14 +463,14 @@ class DBops:
         conditional_query_dict = {"Count": current_stock_num[0], "Name": f'{current_stock_num[1]}'}
         conditional_query_dict = {"Count": current_stock_num[0], "Name": conditional_query["Name"]}
         print("FUCK YEA RYT")
-        self.UpdateValue(table_name="ProductStock", col_to_update="Count", new_value=to_stock_num, conditional_query=conditional_query_dict)
+        self.UpdateValue(table_name="ProductStock", update_fields="Count", new_value=to_stock_num, conditional_query=conditional_query_dict)
 
     def ChangeComponentStockState(self, stock_type, to_stock_num, **kwargs):
         conditional_query = kwargs["conditional_query"]
         if ("Name" in conditional_query and "Code" not in conditional_query) or ("Name" in conditional_query and "Code" in conditional_query):
             ComponentCode = self.FetchComponent(select_cols=["Code"], conditional_query=conditional_query)[0][0]
-            self.UpdateValue(table_name="ComponentStockStateCount", ComponentCode=ComponentCode, col_to_update=stock_type, new_value=to_stock_num, conditional_query={"`Code`": ComponentCode})
+            self.UpdateValue(table_name="ComponentStockStateCount", ComponentCode=ComponentCode, update_fields=stock_type, new_value=to_stock_num, conditional_query={"`Code`": ComponentCode})
         if "Name" not in conditional_query and "Code" in conditional_query:
-            self.UpdateValue(table_name="ComponentStockStateCount", ComponentCode=conditional_query["Code"], col_to_update=stock_type, new_value=to_stock_num, conditional_query={"`Code`": conditional_query["Code"]})
+            self.UpdateValue(table_name="ComponentStockStateCount", ComponentCode=conditional_query["Code"], update_fields=stock_type, new_value=to_stock_num, conditional_query={"`Code`": conditional_query["Code"]})
         print("funck")
 
