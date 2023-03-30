@@ -17,6 +17,17 @@ def RandomCharGenerator(char_len):
     return random_val
 
 
+def MultiCellSelect(TableObj, event, return_cell_coord=False):
+    print("YOOOOO")
+    _column = TableObj.identify_column(event)
+    _row = TableObj.identify_row(event)
+    TableObj.toggle_select_cell(row=_row, column=_column)
+    if return_cell_coord is True:
+        return _row, _column
+
+
+
+
 class DefaultValues:
     def __init__(self):
         self.stock_state_dict = {

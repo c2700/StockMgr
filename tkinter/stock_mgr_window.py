@@ -3,6 +3,7 @@ import tkinter.messagebox
 from tkinter.ttk import *
 from tkinter import ttk as ttk
 import tksheet
+from tksheet import _tksheet
 from tkinter import *
 from mariadb import connect, Error
 from baseclasses import *
@@ -48,6 +49,8 @@ class StockManager(DefaultValues):
         self.MainWindowTable.basic_bindings(enable=True)
         self.MainWindowTable.tk_focusFollowsMouse()
         # self.MainWindowTable.extra_bindings(bindings="bind_all", func=lambda event: ShiftSelection)
+        # self.MainWindowTable.bind("<Control-Button-1>", lambda event: MultiCellSelect(TableObj=self.MainWindowTable, event=event))
+
 
         self.MainWindowButtonsLayout = Frame(self.MainWindow)
 
@@ -1017,6 +1020,8 @@ class ShowProductStockTableWindow(DefaultValues):
             self.AddStockListbox.delete(0, "end")
 
     def m_RemoveProductWindow(self):
+        self._selected_cells = {()}
+
         self.RemoveProductWindow = Toplevel()
         self.RemoveProductWindow.title = "Remove Product"
         self.RemoveProductWindow.minsize(width=800, height=600)
@@ -1030,22 +1035,46 @@ class ShowProductStockTableWindow(DefaultValues):
         self.Title.grid(row=0, column=0, padx=5, pady=5)
 
         self.ProductTable = tksheet.Sheet(self.BottomFrame, headers=["Product Name", "Code", "Stock State"], data=self.ProductStockData(), show_horizontal_grid=True, expand_sheet_if_paste_too_big=True, show_vertical_grid=True)
+        self.ProductTable.set_all_cell_sizes_to_text()
+        self.ProductTable.enable_bindings("all")
+        self.ProductTable.edit_bindings(True)
+        self.ProductTable.basic_bindings(enable=True)
+        self.ProductTable.tk_focusFollowsMouse()
+        # self.ProductTable.extra_bindings("<Button-1>", lambda event: self.get_selected_cells())
+        # self.ProductTable.bind("<Button-1>", lambda event: self.ProductTable.cell_selected())
+
         self.BtnsFrame = Frame(self.BottomFrame)
         self.ProductTable.grid(row=0, column=0, padx=5, pady=5)
         self.BtnsFrame.grid(row=0, column=1, padx=5, pady=5)
 
-
-        self.RemoveSelectedBtn = Button(self.BtnsFrame, text="Remove Selected", width=16)
-        self.RemoveUnselectedBtn = Button(self.BtnsFrame, text="Remove Unselected", width=16)
-        self.SelectAllBtn = Button(self.BtnsFrame, text="Select All", width=16)
-        self.UnselectAllBtn = Button(self.BtnsFrame, text="Unselect All", width=16)
-        self.InvertSelectionBtn = Button(self.BtnsFrame, text="Invert Selection", width=16)
+        self.RemoveSelectedBtn = Button(self.BtnsFrame, text="Remove Selected", width=16, command=lambda: self.RemoveSelected())
+        # self.RemoveUnselectedBtn = Button(self.BtnsFrame, text="Remove Unselected", width=16, command=None)
+        self.SelectAllBtn = Button(self.BtnsFrame, text="Select All", width=16, command=lambda: self.ProductTable.select_all())
+        self.UnselectAllBtn = Button(self.BtnsFrame, text="Unselect All", width=16, command=lambda: self.ProductTable.deselect(row="all", column="all"))
+        # self.InvertSelectionBtn = Button(self.BtnsFrame, text="Invert Selection", width=16)
         self.DoneBtn = Button(self.BtnsFrame, text="Done", width=16, command=lambda: self.RemoveProductWindow.destroy())
+
         self.RemoveSelectedBtn.grid(row=0, column=0, padx=5, pady=5)
-        self.RemoveUnselectedBtn.grid(row=0, column=1, padx=5, pady=5)
+        # self.RemoveUnselectedBtn.grid(row=0, column=1, padx=5, pady=5)
         self.SelectAllBtn.grid(row=1, column=0, padx=5, pady=5)
         self.UnselectAllBtn.grid(row=1, column=1, padx=5, pady=5)
-        self.InvertSelectionBtn.grid(row=2, column=0, padx=5, pady=5)
+        # self.InvertSelectionBtn.grid(row=2, column=0, padx=5, pady=5)
         self.DoneBtn.grid(row=2, column=1, padx=5, pady=5)
+        self.ProductTable.bind("<Control-Button-1>", lambda event: self.SelectProductCells(event=event))
+
+
+    def SelectProductCells(self, event):
+        _row, _column = MultiCellSelect(TableObj=self.ProductTable, event=event, return_cell_coord=True)
+        _current_selected_cell = None
+        _prev_selected_cell = None
+        _selected_cells = list(self.ProductTable.get_selected_cells())
+        print(f"_selected_cells -> {_selected_cells}")
+        self.ProductTable.deselect(row=_row, column=_column)
+        self.ProductTable.add_cell_selection(row=_row, column=0)
+
+
+    def RemoveSelected(self):
+        print("fuck")
+        print(self._selected_cells)
 
 
