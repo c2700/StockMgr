@@ -1051,14 +1051,14 @@ class ShowProductStockTableWindow(DefaultValues):
         # self.RemoveUnselectedBtn = Button(self.BtnsFrame, text="Remove Unselected", width=16, command=None)
         self.SelectAllBtn = Button(self.BtnsFrame, text="Select All", width=16, command=lambda: self.ProductTable.select_all())
         self.UnselectAllBtn = Button(self.BtnsFrame, text="Unselect All", width=16, command=lambda: self.ProductTable.deselect(row="all", column="all"))
-        # self.InvertSelectionBtn = Button(self.BtnsFrame, text="Invert Selection", width=16)
+        self.InvertSelectionBtn = Button(self.BtnsFrame, text="Invert Selection", width=16, command=lambda: self.invert_selection())
         self.DoneBtn = Button(self.BtnsFrame, text="Done", width=16, command=lambda: self.RemoveProductWindow.destroy())
 
         self.RemoveSelectedBtn.grid(row=0, column=0, padx=5, pady=5)
         # self.RemoveUnselectedBtn.grid(row=0, column=1, padx=5, pady=5)
         self.SelectAllBtn.grid(row=1, column=0, padx=5, pady=5)
         self.UnselectAllBtn.grid(row=1, column=1, padx=5, pady=5)
-        # self.InvertSelectionBtn.grid(row=2, column=0, padx=5, pady=5)
+        self.InvertSelectionBtn.grid(row=2, column=0, padx=5, pady=5)
         self.DoneBtn.grid(row=2, column=1, padx=5, pady=5)
         self.ProductTable.bind("<Control-Button-1>", lambda event: self.SelectProductCells(event=event))
 
@@ -1067,14 +1067,26 @@ class ShowProductStockTableWindow(DefaultValues):
         _row, _column = MultiCellSelect(TableObj=self.ProductTable, event=event, return_cell_coord=True)
         _current_selected_cell = None
         _prev_selected_cell = None
-        _selected_cells = list(self.ProductTable.get_selected_cells())
-        print(f"_selected_cells -> {_selected_cells}")
         self.ProductTable.deselect(row=_row, column=_column)
         self.ProductTable.add_cell_selection(row=_row, column=0)
+        self._selected_cells = list(self.ProductTable.get_selected_cells())
 
 
     def RemoveSelected(self):
-        print("fuck")
-        print(self._selected_cells)
+        for i in self._selected_cells:
+            _row = i[0]
+            _Name = self.ProductTable.get_cell_data(r=_row, c=0)
+            print(f"{_Name} - r={_row}, c=0")
+            _ = self.db_ops_obj.FetchProduct(select_cols=["Code"], conditional_query={"Name": f"'{_Name}'"})
+            _Code = _[0][0]
+            self.db_ops_obj.RemoveProduct(Code=_Code, Name=f"'{_Name}'")
 
-
+    def invert_selection(self):
+        self._selected_cells = list(self.ProductTable.get_selected_cells())
+        self.ProductTable.deselect(row="all", column="all")
+        self.ProductTable.select_column(0)
+        _selected_column_cells = list(self.ProductTable.get_selected_columns(get_cells=True))
+        _unselected_cols = [(i[1], i[0]) for i in _selected_column_cells if (i[1], i[0]) not in self._selected_cells]
+        self.ProductTable.toggle_select_column(column=0)
+        for i in _unselected_cols:
+            self.ProductTable.toggle_select_cell(row=i[0], column=0)

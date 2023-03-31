@@ -18,10 +18,10 @@ def RandomCharGenerator(char_len):
 
 
 def MultiCellSelect(TableObj, event, return_cell_coord=False):
-    print("YOOOOO")
     _column = TableObj.identify_column(event)
     _row = TableObj.identify_row(event)
-    TableObj.toggle_select_cell(row=_row, column=_column)
+    # TableObj.toggle_select_cell(row=_row, column=_column)
+    TableObj.add_cell_selection(row=_row, column=_column)
     if return_cell_coord is True:
         return _row, _column
 
