@@ -99,8 +99,15 @@ class StockManager(DefaultValues):
                 print("SHIIIIITTTTT")
             if db_data_set_list is not None:
                 for i in db_data_set_list[0]:
-                    _temp_data = list(i[0][:-1])
+                    _temp_data = [i[0][0], i[0][2]]
                     _stock_state = [i[1]]
+
+                    # _stock_state = None
+                    # if i[1] == "out-of-stock":
+                    #     _stock_state = [i[1]]
+                    # if i[1] == "in-stock":
+                    #     _stock_state = [i[0][2]]
+
                     data_list += [_temp_data + _stock_state]
                 return data_list
         except Exception as e:
