@@ -7,14 +7,16 @@ import random
 
 def RandomCharGenerator(char_len):
     chr_list = [chr(i) for i in range(48, 58)]
-    chr_list += [chr(i) for i in range(65, 91)]
+    # chr_list += [chr(i) for i in range(65, 91)]
+
+    print(chr_list)
 
     random_val = ""
 
     rand = random.Random()
     for i in range(0, char_len):
         random_val += rand.choice(chr_list)
-    return random_val
+    return int(random_val)
 
 
 def MultiCellSelect(TableObj, event, return_cell_coord=False):
@@ -60,6 +62,7 @@ class ChangeStockStateWindow(DefaultValues):
         self.Title = Label(self.stockstatewindow, text=self.title)
         self.StockNameCombobox = Combobox(self.stockstatewindow)
         self.FromStockStateCombobox = Combobox(self.stockstatewindow)
+        self.FromStockStateQntytLabel = Label(self.stockstatewindow)
         self.ToStockStateCombobox = Combobox(self.stockstatewindow)
         self.StockQuantitySpinbox = Spinbox(self.stockstatewindow, width=8)
         self.ChangeBtn = Button(self.stockstatewindow, text="Change ", command=self.ChangeBtn)
@@ -67,6 +70,7 @@ class ChangeStockStateWindow(DefaultValues):
         self.Title.grid(row=0, column=1, pady=10)
         self.StockNameCombobox.grid(row=1, column=0, padx=15, pady=5)
         self.FromStockStateCombobox.grid(row=1, column=1, padx=5, pady=5)  # top
+        self.FromStockStateQntytLabel.grid(row=1, column=2, padx=5, pady=5)  # top
         self.ToStockStateCombobox.grid(row=2, column=1, padx=5, pady=5)  # bottom
         self.StockQuantitySpinbox.grid(row=2, column=2, padx=5, pady=5)
         self.ChangeBtn.grid(row=3, column=0, padx=5, pady=5)
