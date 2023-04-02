@@ -319,7 +319,7 @@ class DBops:
         # _values = "(" + str.join(',', [f"{(row_data[i])}" for i in row_data]) + ")"
         _cols = str.join(',', _cols)
         _values = "(" + str.join(',', _values) + ")"
-        query = f"INSERT INTO TABLE {table_name}({_cols}) VALUES {_values}"
+        query = f"INSERT INTO {table_name}({_cols}) VALUES {_values}"
         print(query)
         self.db_cursor.execute(query)
         self.db_cursor.execute("COMMIT")
@@ -376,19 +376,23 @@ class DBops:
 
 
     # def AddComponent(self, component_name, component_code, component_count):
-    def AddComponent(self, component_name, component_count):
-        _component_code = f"'{RandomCharGenerator(char_len=6)}'"
-        self.AddRow(table_name="ComponentStock", row_data={"Name": component_name,
-                                                           "Code": _component_code,
+    def AddComponent(self, _added_component_name, component_count, return_code=False):
+        self._added_component_code = RandomCharGenerator(char_len=6)
+        self.AddRow(table_name="ComponentStock", row_data={"Name": _added_component_name,
+                                                           "Code": self._added_component_code,
                                                            # "Code": component_code,
                                                            "Count": component_count})
 
-        self.AddRow(table_name="ComponentStockStateCount", row_data={"Code": _component_code,
+        self.AddRow(table_name="ComponentStockStateCount", row_data={"Code": self._added_component_code,
                                                                      # "Code": component_code,
-                                                                     "in-stock Count": component_count,
-                                                                     "Rejected Count": 0,
-                                                                     "Lost Count": 0,
-                                                                     "Defective Count": 0})
+                                                                     "`in-stock Count`": component_count,
+                                                                     "`Rejected Count`": 0,
+                                                                     "`Lost Count`": 0,
+                                                                     "`Defective Count`": 0})
+    @property
+    def get_added_component_code(self):
+        return self._added_component_code
+
 
     def RemoveComponent(self, **kwargs):
         _kwargs = {
@@ -425,11 +429,11 @@ class DBops:
             # self.AddComponent(_component_name, _component_code, _component_count)
             # self.AddComponent(_component_name, _component_count)
 
-        _product_code = f"'{RandomCharGenerator(char_len=6)}'"
+        self._added_product_code = RandomCharGenerator(char_len=6)
 
         self.AddRow(table_name="ProductStock",
                     row_data={"Name": product_name,
-                              "Code": _product_code,
+                              "Code": self._added_product_code,
                               "Count": product_count})
 
         for i in component_list_dict:
@@ -438,9 +442,12 @@ class DBops:
             _component_code = component_list_dict[_component_name]["code"]
             self.AddRow(table_name="ComponentsPerProduct",
                         row_data={
-                            "`Product Code`": _product_code,
+                            "`Product Code`": self._added_product_code,
                             "`Component Code`": _component_code,
-                            "`Component Code Count`": _component_count})
+                            "`CodeCount`": _component_count})
+    @property
+    def get_added_product_code(self):
+        return self._added_product_code
 
     def RemoveProduct(self, **kwargs):
         '''

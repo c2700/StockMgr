@@ -3,7 +3,6 @@ import tkinter.messagebox
 from tkinter.ttk import *
 from tkinter import ttk as ttk
 import tksheet
-from tksheet import _tksheet
 from tkinter import *
 from mariadb import connect, Error
 from baseclasses import *
@@ -375,11 +374,15 @@ class AddRemoveComponentWindow(AddRemoveWindow):
             # _component_code = RandomCharGenerator(char_len=6)
             # self.db_ops_obj.AddComponent(_component_name, _component_code, _component_quantity)
             try:
+                if self.db_ops_obj.FetchComponent(select_cols=["Code"], conditional_query={"Name": _component_name}) is not None:
+                    messagebox.showerror(message=f"Component Name {_component_name} already exists. Please enter a different Name")
+                    return
                 self.db_ops_obj.AddComponent(_component_name, _component_quantity)
-                _component_code = self.db_ops_obj.FetchComponent(select_cols=["Code"], conditional_query={"Name": _component_name})[0][0]
-                messagebox.showinfo(message=f"Added {self.title_text} {_component_name} - {_component_code}")
-            except:
-                messagebox.showerror(message=f"Could not add {self.title_text} {_component_name}")
+                # _component_code = self.db_ops_obj.FetchComponent(select_cols=["Code"], conditional_query={"Name": _component_name})[0][0]
+                # messagebox.showinfo(message=f"Added {self.title_text} {_component_name} - {_component_code}")
+                messagebox.showinfo(message=f"Added {self.title_text} {_component_name} - {self.db_ops_obj._added_component_code}")
+            except Exception as e:
+                messagebox.showerror(message=f"Could not add {self.title_text} {_component_name}\n\n{e}")
 
 
     def RemoveComponentValue(self):
@@ -1016,7 +1019,7 @@ class ShowProductStockTableWindow(DefaultValues):
 
         def AddProduct():
             self.AddStockListboxComponentList = self.AddStockListboxListVar.get()
-            ProductName = self.ProductNameEntryBox.get()
+            ProductName = f"'{self.ProductNameEntryBox.get()}'"
 
             if (self.AddStockListboxComponentList == () or self.AddStockListboxComponentList == "") and ProductName == "":
                 tkinter.messagebox.showwarning(message="Components not selected and product name not Entered")
