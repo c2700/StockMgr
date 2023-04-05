@@ -97,6 +97,8 @@ class StockManager(DefaultValues):
         self.RefresTableDataBtn.grid(row=5, column=1, padx=35, pady=5, ipadx=10)
 
         # component keybindings
+        # self.SearchComponentEntry.bind("<Return>", lambda event: self.SearchWindow())
+        # Widget_TempText(temp_text="Search Component", widget_object=self.SearchComponentEntry)
         self.SearchComponentEntry.bind("<Return>", lambda event: self.SearchWindow())
 
     def MainWindowTableData(self):
@@ -582,7 +584,8 @@ class ChangeComponentStockStateWindow(ChangeStockStateWindow):
         elif not isinstance(eval(self.StockQuantitySpinbox.get()), int) or isinstance(eval(self.StockQuantitySpinbox.get()), float):
             messagebox.showerror(message="Please enter number in quantity")
             return 5
-        elif all(i != "" for i in [self.StockQuantitySpinbox.get(), self.FromStockStateCombobox.get(), self.ToStockStateCombobox.get(), self.ComponentNameComboBox.get()]):
+        # elif all(i != "" for i in [self.StockQuantitySpinbox.get(), self.FromStockStateCombobox.get(), self.ToStockStateCombobox.get(), self.ComponentNameComboBox.get()]):
+        elif "" not in [self.StockQuantitySpinbox.get(), self.FromStockStateCombobox.get(), self.ToStockStateCombobox.get(), self.ComponentNameComboBox.get()]:
             _ = {
                 "in-stock": "`in-stock Count`",
                 "lost": "`Lost Count`",
@@ -593,12 +596,15 @@ class ChangeComponentStockStateWindow(ChangeStockStateWindow):
             _from_state_count = self.db_ops_obj.FetchComponent(select_cols=[_[_from_state]], conditional_query={"Code": self.Component_code}, table_name="ComponentStockStateCount")[0][0]
             _change_quantity = int(self.StockQuantitySpinbox.get())
             _to_state = self.ToStockStateCombobox.get()
-            if (_change_quantity > _from_state_count) and (_to_state != "in-stock"):
-                messagebox.showinfo(message=f"Changed {_change_quantity} stocks of {self.ComponentNameComboBox.get()} from {self.FromStockStateCombobox.get()} to {self.ToStockStateCombobox.get()}")
+            if _change_quantity > _from_state_count:
+                messagebox.showinfo(message=f"Cannot change stocks of {self.ComponentNameComboBox.get()} from {self.FromStockStateCombobox.get()} to {self.ToStockStateCombobox.get()} as the quantity to change is more than what is available")
+                return 6
+            elif _change_quantity <= _from_state_count:
+                messagebox.showinfo(message=f"Changed {_change_quantity} stocks of '{self.ComponentNameComboBox.get()}' from {self.FromStockStateCombobox.get()} to {self.ToStockStateCombobox.get()}")
             self.db_ops_obj.ChangeComponentStockState(from_stock_state=_from_state, to_stock_state=_to_state, change_quantity=_change_quantity, conditional_query={"Code": self.Component_code})
         else:
             messagebox.showerror(message="Please enter the necessary values")
-            return 6
+            return 8
 
 
 class ChangeProductStateWindow(ChangeStockStateWindow):
@@ -946,7 +952,7 @@ class ShowProductStockTableWindow(DefaultValues):
 
         self.ProductBtnsFrame = Frame(self.LeftFrame)
         self.ProductNameEntryBox = Entry(self.ProductBtnsFrame)
-        self.ProductNameCountSpinBox = Spinbox(self.ProductBtnsFrame, width=6)
+        self.ProductNameCountSpinBox = Spinbox(self.ProductBtnsFrame, width=16)
 
 
         self.LeftFrameLabel.grid(row=0, column=0, padx=5, pady=5)
@@ -958,6 +964,9 @@ class ShowProductStockTableWindow(DefaultValues):
 
         for i in range(len(self._data_list)):
             self.AvailableStockListbox.insert(i, self._data_list[i])
+
+        Widget_TempText(temp_text="Product Name", widget_object=self.ProductNameEntryBox)
+        Widget_TempText(temp_text="Product Quantity", widget_object=self.ProductNameCountSpinBox)
         ##################################################################
 
 
@@ -967,12 +976,13 @@ class ShowProductStockTableWindow(DefaultValues):
         self.RemBtnIndexTuple = (Variable())
         self.AddBtn = Button(self.MiddleFrame, text="->", command=lambda: MoveListItemsBtnCmd(self.AvailableStockListbox, self.AddStockListbox, btn_obj=self.AddBtn), textvariable=self.RemBtnIndexTuple)
         self.RemoveBtn = Button(self.MiddleFrame, text="<-", command=lambda: MoveListItemsBtnCmd(self.AddStockListbox, self.AvailableStockListbox, btn_obj=self.RemoveBtn), textvariable=self.AddBtnIndexTuple)
-        self.ComponentCountSpinBox = Spinbox(self.MiddleFrame, width=6)
+        self.ComponentCountSpinBox = Spinbox(self.MiddleFrame, width=10)
 
         self.AddBtn.grid(row=0, column=0, padx=5, pady=5)
         self.RemoveBtn.grid(row=1, column=0, padx=5, pady=5)
         self.ComponentCountSpinBox.grid(row=2, column=0, padx=5, pady=5)
 
+        Widget_TempText(temp_text="Quantity", widget_object=self.ComponentCountSpinBox)
 
         ################ RIGHT FRAME ##################
         self.RightFrameLabel = Label(self.RightFrame, text="Component Stock For Product")

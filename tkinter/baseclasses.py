@@ -1,8 +1,26 @@
 import tkinter
+from idlelib.sidebar import temp_enable_text_widget
 from tkinter import Frame, Button, Entry, Toplevel, Label, Spinbox, messagebox
 from tkinter.ttk import Combobox
 # from db_ops import *
 import random
+
+
+
+def Widget_TempText(temp_text, widget_object):
+    widget_object.insert(0, temp_text)
+    '''
+    widget_object.bind("<FocusIn>", lambda event: widget_object.delete(0, "end"))
+    widget_object.bind("<FocusOut>", lambda event: ReEnter_Text())
+    # widget_object.bind("<Button-1>", lambda event: widget_object.insert(0, temp_text))
+
+    def ReEnter_Text():
+        if (widget_object.get() == temp_text) or (widget_object.get() == ""):
+            widget_object.delete(0, "end")
+            widget_object.insert(0, temp_text)
+        else:
+            widget_object.insert(0, widget_object.get())
+    '''
 
 
 def RandomCharGenerator(char_len):
@@ -75,6 +93,11 @@ class ChangeStockStateWindow(DefaultValues):
         self.StockQuantitySpinbox.grid(row=2, column=2, padx=5, pady=5)
         self.ChangeBtn.grid(row=3, column=0, padx=5, pady=5)
 
+        Widget_TempText(temp_text=f"{self.stock_type_text} Name", widget_object=self.StockNameCombobox)
+        Widget_TempText(temp_text=f"From Stock State", widget_object=self.FromStockStateCombobox)
+        Widget_TempText(temp_text=f"To Stock State", widget_object=self.ToStockStateCombobox)
+        Widget_TempText(temp_text=f"Quantity", widget_object=self.StockQuantitySpinbox)
+
 
     def ChangeBtn(self):
         pass
@@ -114,7 +137,7 @@ class AddRemoveWindow:
         self.label = Label(self.TopFrame, text=self.title)
 
         self.entry_name = Entry(self.TopFrame, width=30)
-        self.quantity_spinbox = Spinbox(self.TopFrame, width=7, increment=True)
+        self.quantity_spinbox = Spinbox(self.TopFrame, width=10, increment=True)
 
         self.BottomFrame = Frame(self.addremovewindow)
         self.BottomFrame.grid(row=1, column=0)
@@ -126,6 +149,9 @@ class AddRemoveWindow:
         self.quantity_spinbox.grid(row=1, column=1, ipady=2, padx=10, pady=10)
         self.add_btn.grid(row=0, column=0, padx=2, pady=2)
         self.rem_btn.grid(row=0, column=1, padx=2, pady=2)
+
+        Widget_TempText(temp_text=f"{title_text} Name", widget_object=self.entry_name)
+        Widget_TempText(temp_text="Quantity", widget_object=self.quantity_spinbox)
 
     def AddValueCheck(self):
         if self.quantity_spinbox.get() == "" and self.entry_name.get() == "":
