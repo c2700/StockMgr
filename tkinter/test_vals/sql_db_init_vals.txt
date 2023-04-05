@@ -1,0 +1,75 @@
+CREATE TABLE ProductStock(Name LONGTEXT NOT NULL, Code INT NOT NULL PRIMARY KEY, Count INT NOT NULL, UNIQUE INDEX Code_idx (Code ASC) VISIBLE);
+
+CREATE TABLE ComponentStock(Name LONGTEXT NOT NULL, Code INT NOT NULL PRIMARY KEY, Count INT NOT NULL, UNIQUE INDEX Code_idx (Code ASC) VISIBLE);
+
+CREATE TABLE ComponentStockStateCount(`Code` INT NOT NULL, 
+`in-stock Count` INT NOT NULL, 
+`Rejected Count` INT NOT NULL, 
+`Lost Count` INT NOT NULL, 
+`Defective Count` INT NOT NULL, 
+CONSTRAINT `Code` FOREIGN KEY (`Code`) REFERENCES ComponentStock(Code) ON DELETE CASCADE ON UPDATE CASCADE, 
+INDEX `Code_idx` (`Code` ASC) VISIBLE);
+
+
+
+#### this worked
+CREATE TABLE ComponentsPerProduct
+(
+`Product Code` INT NOT NULL, 
+FOREIGN KEY (`Product Code`) REFERENCES ProductStock(Code) ON DELETE CASCADE ON UPDATE CASCADE, 
+
+`Component Code` INT NOT NULL, 
+FOREIGN KEY (`Component Code`) REFERENCES ComponentStock(Code) ON DELETE CASCADE ON UPDATE CASCADE, 
+
+CodeCount INT NOT NULL
+);
+
+
+
+
+
+INSERT INTO ProductStock(Name, Code, Count) VALUES ('Phone', 7786, 88), ('glasses', 665, 998), ('HDD', 653, 887);
+
+INSERT INTO ComponentStock(Name, Code, Count) VALUES ('Glass', 23, 90), ('frame', 97, 78), ('screen', 300, 780), ('processor', 897, 876), ('lpddr5', 7765, 876), ('microphone', 7785, 5436), ('logicboard', 66548, 887), ('disk platter', 6675, 9987), ('disk r/w head', 765, 8876), ('disk case', 54, 908);
+
+INSERT INTO ComponentStockStateCount(`Code`, `in-stock Count`, `Rejected Count`, `Lost Count`, `Defective Count`) VALUES (23, 78, 18, 2, 2), (97, 70, 2, 2, 4), (300, 700, 20, 20, 40), (897, 800, 50, 5, 26), (7765, 800, 30, 20, 6), (7785, 5000, 400, 30, 6), (66548, 600, 200, 7, 80), (6675, 9000, 900, 80, 7), (765, 8000, 800, 70, 6), (54, 800, 80, 20, 8);
+
+INSERT INTO ComponentsPerProduct(`Product Code`, `Component Code`, CodeCount) VALUES
+(7786, 23, 0), 
+(7786, 97, 0), 
+(7786, 300, 1), 
+(7786, 897, 1), 
+(7786, 7765, 2), 
+(7786, 7785, 2), 
+(7786, 66548, 1), 
+(7786, 6675, 0), 
+(7786, 765, 0), 
+(7786, 54, 0), 
+
+(665, 23, 2), 
+(665, 97, 1), 
+(665, 300, 0), 
+(665, 897, 0), 
+(665, 7765, 0), 
+(665, 7785, 0), 
+(665, 66548, 0), 
+(665, 6675, 0), 
+(665, 765, 0), 
+(665, 54, 0), 
+
+(653, 23, 0), 
+(653, 97, 0), 
+(653, 300, 0), 
+(653, 897, 0), 
+(653, 7765, 0), 
+(653, 7785, 0), 
+(653, 66548, 0), 
+(653, 6675, 1), 
+(653, 765, 1), 
+(653, 54, 1);
+
+
+-- DROP TABLE ComponentStockStateCount;
+-- DROP TABLE ComponentsPerProduct;
+-- DROP TABLE ProductStock;
+-- DROP TABLE ComponentStock;

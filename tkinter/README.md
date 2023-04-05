@@ -5,5 +5,7 @@
 
 if App does not run with provided root password, re-run the "db_setup.ps1" but without providing the root password
 
-nuitka, cx_freeze, py2exe
+To test DB using test values exexcute
+mysql -u 'root' StockDB < "test_vals\sql_db_init_vals.txt"
+
 
