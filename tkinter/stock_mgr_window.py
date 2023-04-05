@@ -10,21 +10,31 @@ from db_ops import *
 from platform import system
 
 class StockManager(DefaultValues):
-    def __init__(self, MainWindow):
+    # def __init__(self, MainWindow, user, user_pass):
+    def __init__(self, MainWindow, creds_dict):
         super(StockManager, self).__init__()
         self.MainWindow = MainWindow
         self.db_conn_obj = None
         self.db_cursor = None
         self.db_ops = None
+
+        # self.user = user
+        # self.user_pass = user_pass
+        self.creds_dict = creds_dict
+
         try:
+            self.db_conn_obj = connect(**self.creds_dict)
+            '''
             if system() == "Linux":
-                self.db_conn_obj = connect(user='blank',host="localhost",database="StockDB",unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/db_server.sock")
+                self.db_conn_obj = connect(user='blank', host="localhost",
+                                           database="StockDB",
+                                           unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/db_server.sock")
             if system() == "Windows":
                 self.db_conn_obj = connect(user='blank',
                                   host="localhost",
                                   database="StockDB",
                                   port=3306)
-
+            '''
             print("FUCK YEA!!!!!!")
         # except Exception as e:
         #     print("WTF????? AAAAHHHHH IS D FUCKING SERVICE UP & RUNNING!!??????", e)
