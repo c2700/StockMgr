@@ -18,9 +18,9 @@ Write-Host "Enter Credentials that will be "
 $user = Read-Host "enter username ";
 $pass = Read-Host "enter password";
 
-$creds = @{ db_user = ${user} }
+$creds = @{ user = ${user} }
 if ("$pass" -ne "") {
-    $creds["pass"] = ${pass}
+    $creds["password"] = ${pass}
 }
 
 $_root_user_args_array_obj = @("-u", "root")
@@ -30,9 +30,9 @@ if ("$r_pass" -ne "") {
 }
 
 
-ConvertTo-Json -InputObject $creds -OutVariable $json_var -Verbose -Depth 1 | Out-File "C:\Users\rohan\creds.txt" -Force
-
-Out-File "${PSScriptRoot}/creds.txt" -Verbose -Debug -Confirm:$false
+Remove-Item "E:\Common\project\StockMgr\tkinter\creds.txt"
+ConvertTo-Json -InputObject $creds -Verbose -Depth 1 | Out-File -FilePath "E:\Common\project\StockMgr\tkinter\creds.txt" -Encoding ascii -Force -Confirm:$false -Append
+# default, ascii, oem, 
 
 Write-Host "Setting '${db_data_dir}' as the  data directory and installing 'StockMgrDB_Service' as DB service for the StockManager App"
 mariadb-install-db.exe -o -W StockMgrDB_socket.sock -S "StockMgrDB_Service" -P 3306 -d "$db_data_dir"
