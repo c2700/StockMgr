@@ -7,7 +7,6 @@ from tkinter import *
 from mariadb import connect, Error
 from baseclasses import *
 from db_ops import *
-from platform import system
 
 class StockManager(DefaultValues):
     # def __init__(self, MainWindow, user, user_pass):

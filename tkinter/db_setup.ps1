@@ -1,9 +1,11 @@
 ﻿cls
-Write-Host "Please Install MariaDB before proceeding"
+Write-Host "Please Install MariaDB and python before proceeding"
 Pause
 
 $db_data_dir = "${PSScriptRoot}\db\data";
 $db_data_dir_cfg_file = "${db_data_dir}\my.ini";
+
+python3 -r "${PSScriptRoot}\requirements.txt"
 
 Stop-Service StockMgrDB_Service -Verbose
 cmd /c sc delete StockMgrDB_Service

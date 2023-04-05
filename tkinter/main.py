@@ -1,4 +1,5 @@
 from stock_mgr_window import *
+from platform import system
 import json
 
 def main():
