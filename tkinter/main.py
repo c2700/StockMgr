@@ -25,7 +25,7 @@ def main():
             #         host="localhost",
             #         database="StockDB",
             #         unix_socket="/home/blank/Projects/Hari_stock_mgmnt/StockMgr/tkinter/db/db_server.sock")
-        if system() == "Windows":
+        elif system() == "Windows":
             creds_dict["port"] = 3306
             # connect(user='blank',
             #         host="localhost",
